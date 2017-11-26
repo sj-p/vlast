@@ -153,7 +153,11 @@ load_config ()
             g_free (api_key);
         }
 
-        profile.time_format = g_key_file_get_string (kf, "Settings", "TimeFormat", NULL);
+        /* if time format wasn't on command line, read from config */
+        if (profile.time_format == NULL)
+        {
+            profile.time_format = g_key_file_get_string (kf, "Settings", "TimeFormat", NULL);
+        }
     }
     else
     {
@@ -222,6 +226,8 @@ load_options (int *argc, char ***argv)
             "print debug info on stderr", NULL },
         { "config",     0,    0, G_OPTION_ARG_FILENAME, &profile.config_file,
             "use configuration file F", "F" },
+        { "time-format", 'T', 0, G_OPTION_ARG_STRING, &profile.time_format,
+            "print date/time using format string T", "T" },
         { "list-methods",  0, 0, G_OPTION_ARG_NONE, &mlist,
             "list supported methods, then exit", NULL },
         { "list-periods",  0, 0, G_OPTION_ARG_NONE, &plist,

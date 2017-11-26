@@ -33,7 +33,7 @@ ApiKey & TimeFormat in group [Settings]
     ApiKey is where you declare your own API key. (defaults to internal key)
 
     TimeFormat is a strftime format string, to customise the way date/time
-        is printed. (defaults to "%F %T")
+        is printed. (overriden by --time-format/-T; defaults to "%F %T")
 
 The default location for a configuration file is XDG_CONFIG_HOME/vlast.conf
 (which will usually be ~/.config/vlast.conf). Or you can specify a location
@@ -82,6 +82,9 @@ Specify limitations on data:
   --starts=S           fetch data from start time S
   --ends=E             fetch data till end time E
 
+Output control:
+  -T, --time-format=T  print date/time using format string T
+
 XML files:
   -o, --outfile=F      output returned xml to file F
   -i, --infile=F       don't fetch data, process xml file F
@@ -103,8 +106,8 @@ Examples
     Same again, but with short method name, save resulting xml:
         vlast -m u.grt -u fake_user_0 -l 5 -o last5.xml
 
-    Print data saved above:
-        vlast -i last5.xml
+    Print data saved above, using custom date/time format:
+        vlast -i last5.xml -T "%F (%a) %T"
 
     Get info on that account, use a specific config file, print debug info:
         vlast -d -m u.gi -u fake_user_0 --config my_config
@@ -140,6 +143,5 @@ TODO
 ----
 * support including image URLs in output
 * support specifying a page range, and fetch data for each page consecutively
-* support setting date/time format on the command line
 * vlast ought to drop all superfluous API parameters when fetching data
     (this is as yet only partially implemented)
