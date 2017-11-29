@@ -12,6 +12,8 @@ extern VlastBuffer xml_buf;
 extern const gchar *tagtypes[];
 extern const gchar *methods[][NUM_METH_STR];
 extern const gchar *periods[][NUM_PER_STR];
+extern const gchar *imgsizes[];
+extern const gint num_imgsizes;
 
 
 static gchar *
@@ -224,7 +226,7 @@ add_output_string (VlastResults *results, const gchar *label, const gchar *str)
     gchar *temp;
     gchar *indent_str = NULL;
 
-    if (results == NULL) return;
+    if (results == NULL || label == NULL || str == NULL) return;
 
     indent_str = build_indent (results);
 
@@ -414,6 +416,55 @@ add_output_dur_from_tag (VlastResults *results, xmlNode *first, const gchar *tag
 }
 
 
+/* search sibling nodes for image tags;
+ * add url as string for appropriate size */
+static void
+add_output_image_url (VlastResults *results, xmlNode *first_node)
+{
+    xmlNode *node, **nodes;
+    gchar *value, *url;
+    gint index;
+
+    if (results == NULL || first_node == NULL || profile.img_size < 0) return;
+
+    nodes = g_new0 (xmlNode*, num_imgsizes);
+
+    for (node = first_node; node != NULL; node = node->next)
+    {
+        if (node->type != XML_ELEMENT_NODE ||
+            strcmp ((char*) node->name, "image") != 0) continue;
+
+        value = (gchar *) xmlGetProp (node, (xmlChar*) "size");
+
+        index = index_image_size (value);
+
+        if (index >= 0) nodes[index] = node;
+
+        g_free (value);
+    }
+
+    node = NULL;
+    for (index = profile.img_size; node == NULL && imgsizes[index] != NULL; index++)
+    {
+        if (nodes[index] != NULL) node = nodes[index];
+    }
+    for (index = profile.img_size - 1; node == NULL && index >= 0; index--)
+    {
+        if (nodes[index] != NULL) node = nodes[index];
+    }
+
+    g_free (nodes);
+
+    if (node == NULL) return;
+
+    url = get_node_contents (node);
+
+    add_output_string (results, "image", url);
+
+    g_free (url);
+}
+
+
 static gboolean
 proc_artist_info (xmlNode *first_node, VlastResults *results, gint count)
 {
@@ -428,6 +479,8 @@ proc_artist_info (xmlNode *first_node, VlastResults *results, gint count)
 
     add_output_bool_from_tag (results, first_node,
                               "ontour", "on tour", "1", FALSE);
+
+    add_output_image_url (results, first_node);
 
     node = get_child_node_by_tag (first_node, "stats");
     stat_node = (node == NULL ? first_node : node->children);
@@ -512,8 +565,14 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
     {
         node = get_child_node_by_tag (first_node, "album");
         if (node != NULL)
+        {
             add_output_str_from_tag (results, node->children, "title", "album");
+
+            add_output_image_url (results, node->children);
+        }
     }
+
+    add_output_image_url (results, first_node);
 
     add_output_date_from_tag (results, first_node, "date", "time");
 
@@ -594,6 +653,8 @@ proc_album_info (xmlNode *first_node, VlastResults *results, gint count)
 
     add_output_str_from_tag (results, first_node, "name", "album");
 
+    add_output_image_url (results, first_node);
+
     add_output_int_from_tag (results, first_node, "listeners",
                              "listeners", FALSE);
 
@@ -645,6 +706,8 @@ proc_user_info (xmlNode *first_node, VlastResults *results, gint count)
     add_leader (results, "user", count);
 
     add_output_str_from_tag (results, first_node, "name", "username");
+
+    add_output_image_url (results, first_node);
 
     add_output_str_from_tag (results, first_node, "type", "type");
 

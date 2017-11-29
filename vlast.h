@@ -15,6 +15,7 @@ typedef struct _VlastData
     gint        ends;
     gint        limit;
     gint        num_page;
+    gint        img_size;
     gchar      *api_key;
     gchar      *time_format;
     gchar      *xml_file;
@@ -70,6 +71,7 @@ enum
 
 
 gboolean load_xml_doc ();
+gint index_image_size (const gchar *img_size);
 
 
 #endif

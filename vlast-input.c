@@ -9,11 +9,14 @@
 #include "vlast.h"
 
 
-VlastData profile = {FALSE, FALSE, -1, -1, -1, -1, -1, -1, -1,
+VlastData profile = {FALSE, FALSE, -1, -1, -1, -1, -1, -1, -1, -1,
                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 VlastBuffer xml_buf = {NULL, 0, 0};
 
 const gchar *tagtypes[] = {"artist", "album", "track", NULL};
+
+const gchar *imgsizes[] = {"small", "medium", "large", "extralarge", "mega", NULL};
+const gint num_imgsizes = sizeof (imgsizes) / sizeof (gchar*);
 
 
 /* supported methods:
@@ -123,10 +126,27 @@ mem_write (void *buffer, size_t size, size_t nmemb, void *stream)
 }
 
 
+gint
+index_image_size (const gchar *img_size)
+{
+    gint i;
+
+    if (img_size == NULL) return -1;
+
+    for (i = 0; imgsizes[i] != NULL; i++)
+    {
+        if (g_ascii_strcasecmp (img_size, imgsizes[i]) == 0)
+            return i;
+    }
+
+    return -1;
+}
+
+
 static void
 load_config ()
 {
-    gchar *api_key;
+    gchar *api_key, *img_size = NULL;
     GKeyFile *kf;
 
     if (profile.config_file == NULL)
@@ -158,6 +178,24 @@ load_config ()
         {
             profile.time_format = g_key_file_get_string (kf, "Settings", "TimeFormat", NULL);
         }
+
+        /* if image size wasn't on command line, read from config */
+        if (profile.img_size < 0)
+        {
+            img_size = g_key_file_get_string (kf, "Settings", "ImageSize", NULL);
+
+            if (img_size != NULL && img_size[0] != '\0')
+            {
+                if ((profile.img_size = index_image_size (img_size)) < 0)
+                {
+                    ERR("CONFIG: illegal imagesize %s", img_size);
+                }
+
+            }
+
+            g_free (img_size);
+        }
+
     }
     else
     {
@@ -186,7 +224,8 @@ static gboolean
 load_options (int *argc, char ***argv)
 {
     gchar *method = NULL, *period = NULL, *input_file = NULL, *tagtype = NULL;
-    gboolean retval, mlist = FALSE, plist = FALSE;
+    gchar *img_size = NULL;
+    gboolean retval, mlist = FALSE, plist = FALSE, ilist = FALSE;
     gint i;
     gint starts = -1, ends = -1, limit = -1, num_page = -1;
     GError *error = NULL;
@@ -228,10 +267,14 @@ load_options (int *argc, char ***argv)
             "use configuration file F", "F" },
         { "time-format", 'T', 0, G_OPTION_ARG_STRING, &profile.time_format,
             "print date/time using format string T", "T" },
+        { "image-size", 'I', 0, G_OPTION_ARG_STRING, &img_size,
+            "print image URLs for size I (default: no urls)", "I" },
         { "list-methods",  0, 0, G_OPTION_ARG_NONE, &mlist,
             "list supported methods, then exit", NULL },
         { "list-periods",  0, 0, G_OPTION_ARG_NONE, &plist,
             "list short & long period strings, then exit", NULL },
+        { "list-image-sizes",  0, 0, G_OPTION_ARG_NONE, &ilist,
+            "list image size names", NULL },
         { NULL }
     };
 
@@ -277,7 +320,15 @@ load_options (int *argc, char ***argv)
                                     periods[i][PER_STR_API]);
         }
     }
-    if (mlist || plist) exit (0);
+    if (ilist)
+    {
+        printf ("\nImage size names:\n");
+        for (i = 0; imgsizes[i] != 0; i++)
+        {
+            printf ("    %s\n", imgsizes[i]);
+        }
+    }
+    if (mlist || plist || ilist) exit (0);
 
     if (input_file != NULL)
     {
@@ -299,6 +350,17 @@ load_options (int *argc, char ***argv)
         }
 
         input_file = NULL;
+    }
+
+    /* process img_size */
+    if (img_size != NULL)
+    {
+        if ((profile.img_size = index_image_size (img_size)) < 0)
+        {
+            ERR("OPTS: illegal imagesize %s", img_size);
+        }
+
+        g_free (img_size);
     }
 
     /* check API options */

@@ -28,12 +28,15 @@ wherever is convenient.
 Configuration File
 ------------------
 This is a key-value file similar to .desktop files. Vlast looks for keys
-ApiKey & TimeFormat in group [Settings]
+ApiKey, TimeFormat & ImageSize in group [Settings]
 
     ApiKey is where you declare your own API key. (defaults to internal key)
 
     TimeFormat is a strftime format string, to customise the way date/time
         is printed. (overriden by --time-format/-T; defaults to "%F %T")
+
+    ImageSize is the name of the image size for which to print image urls.
+        (overriden by --image-size/I; defaults to no urls)
 
 The default location for a configuration file is XDG_CONFIG_HOME/vlast.conf
 (which will usually be ~/.config/vlast.conf). Or you can specify a location
@@ -62,6 +65,7 @@ General:
   -h, --help           show help text
   --list-methods       list supported methods, then exit
   --list-periods       list short & long period strings, then exit
+  --list-image-sizes   list image size names
   -d, --debug          print debug info on stderr
   --config=F           use configuration file F
 
@@ -84,6 +88,7 @@ Specify limitations on data:
 
 Output control:
   -T, --time-format=T  print date/time using format string T
+  -I, --image-size=I   print image URLs for size I (default: no urls)
 
 XML files:
   -o, --outfile=F      output returned xml to file F
@@ -96,6 +101,10 @@ Notes:
     * short names of method M & period P can be used, see --list-*
     * option names are not always the same as API parameter names, but it
         should be obvious to which parameter they refer
+    * by default, image urls are not printed; if enabled in config or on
+        command line, some urls to images with requested size are printed,
+        or, if not available, the next larger size, or if there is none,
+        the next smaller size
 
 
 Examples
@@ -112,8 +121,8 @@ Examples
     Get info on that account, use a specific config file, print debug info:
         vlast -d -m u.gi -u fake_user_0 --config my_config
 
-    Get info on a specific track:
-        vlast -m t.gi -a Cher -t Believe
+    Get info on a specific track, include mega size image url:
+        vlast -m t.gi -a Cher -t Believe --image-size=mega
 
 
 API Key
@@ -141,7 +150,6 @@ Bugs
 
 TODO
 ----
-* support including image URLs in output
 * support specifying a page range, and fetch data for each page consecutively
 * vlast ought to drop all superfluous API parameters when fetching data
     (this is as yet only partially implemented)
