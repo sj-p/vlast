@@ -138,7 +138,7 @@ with last.fm's requirements; otherwise banning by last.fm may result.
 
 Limitations
 -----------
-* not all API methods are supported, notably search & write methods
+* not all API methods are supported, notably write methods
 * not all request parameters are supported
 * not all returned data is used in generating output (but see --outfile option)
 

@@ -468,7 +468,6 @@ add_output_image_url (VlastResults *results, xmlNode *first_node)
 static gboolean
 proc_artist_info (xmlNode *first_node, VlastResults *results, gint count)
 {
-    gboolean retval = FALSE;
     gchar **strs, **str;
     gint i = 0;
     xmlNode *node, *stat_node;
@@ -510,14 +509,13 @@ proc_artist_info (xmlNode *first_node, VlastResults *results, gint count)
         g_strfreev (strs);
     }
 
-    return retval;
+    return TRUE;
 }
 
 
 static gboolean
 proc_artists (xmlNode *first_node, VlastResults *results)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
     gint i = 0;
 
@@ -529,8 +527,6 @@ proc_artists (xmlNode *first_node, VlastResults *results)
             i++;
 
             proc_artist_info (node->children, results, i);
-
-            retval = TRUE;
         }
     }
 
@@ -539,14 +535,13 @@ proc_artists (xmlNode *first_node, VlastResults *results)
         add_output_string (results, "", "List of artists was empty");
     }
 
-    return retval;
+    return TRUE;
 }
 
 
 static gboolean
 proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
 {
-    gboolean retval = FALSE;
     gchar **tags, **tag;
     xmlNode *node;
 
@@ -603,14 +598,13 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
         g_strfreev (tags);
     }
 
-    return retval;
+    return TRUE;
 }
 
 
 static gboolean
 proc_tracks (xmlNode *first_node, VlastResults *results)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
     gint i = 0;
 
@@ -622,8 +616,6 @@ proc_tracks (xmlNode *first_node, VlastResults *results)
             i++;
 
             proc_track_info (node->children, results, i);
-
-            retval = TRUE;
         }
     }
 
@@ -632,7 +624,7 @@ proc_tracks (xmlNode *first_node, VlastResults *results)
         add_output_string (results, "", "List of tracks was empty");
     }
 
-    return retval;
+    return TRUE;
 }
 
 
@@ -674,7 +666,6 @@ proc_album_info (xmlNode *first_node, VlastResults *results, gint count)
 static gboolean
 proc_albums (xmlNode *first_node, VlastResults *results)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
     gint i = 0;
 
@@ -686,8 +677,6 @@ proc_albums (xmlNode *first_node, VlastResults *results)
             i++;
 
             proc_album_info (node->children, results, i);
-
-            retval = TRUE;
         }
     }
 
@@ -696,7 +685,7 @@ proc_albums (xmlNode *first_node, VlastResults *results)
         add_output_string (results, "", "List of albums was empty");
     }
 
-    return retval;
+    return TRUE;
 }
 
 
@@ -731,7 +720,6 @@ proc_user_info (xmlNode *first_node, VlastResults *results, gint count)
 static gboolean
 proc_users (xmlNode *first_node, VlastResults *results)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
     gint i = 0;
 
@@ -751,7 +739,7 @@ proc_users (xmlNode *first_node, VlastResults *results)
         add_output_string (results, "", "List of users was empty");
     }
 
-    return retval;
+    return TRUE;
 }
 
 
@@ -775,7 +763,6 @@ proc_tag_info (xmlNode *first_node, VlastResults *results, gint count)
 static gboolean
 proc_tags (xmlNode *first_node, VlastResults *results)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
     gint i = 0;
 
@@ -787,8 +774,6 @@ proc_tags (xmlNode *first_node, VlastResults *results)
             i++;
 
             proc_tag_info (node->children, results, i);
-
-            retval = TRUE;
         }
     }
 
@@ -797,14 +782,13 @@ proc_tags (xmlNode *first_node, VlastResults *results)
         add_output_string (results, "", "List of tags was empty");
     }
 
-    return retval;
+    return TRUE;
 }
 
 
 static gboolean
 proc_chart_list (xmlNode *first_node, VlastResults *results, gint count)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
     gint i = 0;
 
@@ -844,14 +828,13 @@ proc_chart_list (xmlNode *first_node, VlastResults *results, gint count)
         add_output_string (results, "", "Chart list was empty");
     }
 
-    return retval;
+    return TRUE;
 }
 
 
 static gboolean
 proc_correction_info (xmlNode *first_node, VlastResults *results, gint count)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
     gchar *corr;
 
@@ -884,14 +867,13 @@ proc_correction_info (xmlNode *first_node, VlastResults *results, gint count)
     }
     --results->indent;
 
-    return retval;
+    return TRUE;
 }
 
 
 static gboolean
 proc_corrections (xmlNode *first_node, VlastResults *results)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
     gint i = 0;
 
@@ -903,8 +885,6 @@ proc_corrections (xmlNode *first_node, VlastResults *results)
             i++;
 
             proc_correction_info (node->children, results, i);
-
-            retval = TRUE;
         }
     }
 
@@ -913,14 +893,13 @@ proc_corrections (xmlNode *first_node, VlastResults *results)
         add_output_string (results, "", "List of corrections was empty");
     }
 
-    return retval;
+    return TRUE;
 }
 
 
 static gboolean
 proc_taggings (xmlNode *first_node, VlastResults *results)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
 
     add_leader (results, "taggings", 0);
@@ -939,17 +918,41 @@ proc_taggings (xmlNode *first_node, VlastResults *results)
     }
     --results->indent;
 
-    return retval;
+    return TRUE;
+}
+
+
+static void
+get_search_coordinates (xmlNode *node, VlastResults *results)
+{
+    gchar *text;
+
+    text = get_child_contents_by_tag (node, "opensearch:itemsPerPage");
+    if (text != NULL) results->per_page = atol (text);
+    g_free (text);
+
+    text = get_child_contents_by_tag (node, "opensearch:totalResults");
+    if (text != NULL) results->total = atol (text);
+    g_free (text);
+
+    if (results->per_page < 1) return;
+
+    text = get_child_contents_by_tag (node, "opensearch:startIndex");
+    if (text != NULL) results->page_num = atol (text) / results->per_page + 1;
+    g_free (text);
+
+    DBG("srch coords: %d %d %d", results->page_num, results->per_page, results->total);
 }
 
 
 static gboolean
 proc_search_results (xmlNode *first_node, VlastResults *results)
 {
-    gboolean retval = FALSE;
     xmlNode *node;
 
-    add_leader (results, "search results", 0);
+    add_leader (results, "search results", profile.num_page);
+
+    get_search_coordinates (first_node, results);
 
     ++results->indent;
     for (node = first_node; node != NULL; node = node->next)
@@ -965,7 +968,7 @@ proc_search_results (xmlNode *first_node, VlastResults *results)
     }
     --results->indent;
 
-    return retval;
+    return TRUE;
 }
 
 
@@ -991,7 +994,7 @@ get_coordinates (xmlNode *node, VlastResults *results)
 static gboolean
 proc_method (xmlNode *first_node)
 {
-    gboolean retval = FALSE;
+    gboolean okay = FALSE;
     const gchar *method = NULL;
     xmlNode *node;
     VlastResults *results;
@@ -1034,61 +1037,61 @@ proc_method (xmlNode *first_node)
             if (g_str_has_suffix (method, "tracks") ||
                 g_str_has_suffix (method, "trackchart"))
             {
-                retval = proc_tracks (node->children, results);
+                okay = proc_tracks (node->children, results);
             }
             else if (g_str_has_suffix (method, "artists") ||
                      g_str_has_suffix (method, "artistchart"))
             {
-                retval = proc_artists (node->children, results);
+                okay = proc_artists (node->children, results);
             }
             else if (g_str_has_suffix (method, "albums") ||
                      g_str_has_suffix (method, "albumchart"))
             {
-                retval = proc_albums (node->children, results);
+                okay = proc_albums (node->children, results);
             }
             else if (strcmp (method, "friends") == 0)
             {
-                retval = proc_users (node->children, results);
+                okay = proc_users (node->children, results);
             }
             else if (g_str_has_suffix (method, "tags"))
             {
-                retval = proc_tags (node->children, results);
+                okay = proc_tags (node->children, results);
             }
             else if (strcmp (method, "corrections") == 0)
             {
-                retval = proc_corrections (node->children, results);
+                okay = proc_corrections (node->children, results);
             }
             else if (g_str_has_suffix (method, "artist"))
             {
-                retval = proc_artist_info (node->children, results, 0);
+                okay = proc_artist_info (node->children, results, 0);
             }
             else if (g_str_has_suffix (method, "album"))
             {
-                retval = proc_album_info (node->children, results, 0);
+                okay = proc_album_info (node->children, results, 0);
             }
             else if (g_str_has_suffix (method, "track"))
             {
-                retval = proc_track_info (node->children, results, 0);
+                okay = proc_track_info (node->children, results, 0);
             }
             else if (g_str_has_suffix (method, "tag"))
             {
-                retval = proc_tag_info (node->children, results, 0);
+                okay = proc_tag_info (node->children, results, 0);
             }
             else if (strcmp (method, "user") == 0)
             {
-                retval = proc_user_info (node->children, results, 0);
+                okay = proc_user_info (node->children, results, 0);
             }
             else if (strcmp (method, "weeklychartlist") == 0)
             {
-                retval = proc_chart_list (node->children, results, 0);
+                okay = proc_chart_list (node->children, results, 0);
             }
             else if (strcmp (method, "taggings") == 0)
             {
-                retval = proc_taggings (node->children, results);
+                okay = proc_taggings (node->children, results);
             }
             else if (strcmp (method, "results") == 0)
             {
-                retval = proc_search_results (node->children, results);
+                okay = proc_search_results (node->children, results);
             }
             else
             {
@@ -1108,7 +1111,7 @@ proc_method (xmlNode *first_node)
         }
     }
 
-    return retval;
+    return okay;
 }
 
 
@@ -1129,7 +1132,6 @@ proc_tree (xmlNode *top_node)
 {
     xmlNode *node;
     gchar *text;
-    gboolean retval = FALSE;
 
     if (strcmp ((char*) top_node->name, "lfm") != 0)
     {
@@ -1149,9 +1151,7 @@ proc_tree (xmlNode *top_node)
     {
         g_free (text);
 
-        retval = proc_method (top_node->children);
-
-        return retval;
+        return proc_method (top_node->children);
     }
     g_free (text);
 
@@ -1195,21 +1195,25 @@ exit_dump:
 gboolean
 load_xml_doc ()
 {
-    gboolean retval = TRUE;
+    gboolean okay = TRUE;
     xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
 
     LIBXML_TEST_VERSION
 
-    /* parse the xml in buffer */
-    doc = xmlReadMemory (xml_buf.buffer, xml_buf.windex, "response.xml", NULL, 0);
+    /* parse the xml in buffer
+     * NB unless debug==TRUE, to cope with last.fm's poor xml
+     * we suppress error/warning messages */
+    doc = xmlReadMemory (xml_buf.buffer, xml_buf.windex, "response.xml", NULL,
+                         (profile.debug ? 0 : XML_PARSE_NOERROR|XML_PARSE_NOWARNING));
+
     if (doc == NULL)
     {
         ERR("XML: failed to parse the data");
 
         dump_xml ();
 
-        retval = FALSE;
+        okay = FALSE;
 
         goto exit_xml;
     }
@@ -1223,11 +1227,11 @@ load_xml_doc ()
 
         dump_xml ();
 
-        retval = FALSE;
+        okay = FALSE;
     }
     else
     {
-        retval = proc_tree (root_element);
+        okay = proc_tree (root_element);
     }
 
 exit_xml:
@@ -1235,6 +1239,6 @@ exit_xml:
 
     xmlCleanupParser ();
 
-    return retval;
+    return okay;
 }
 
