@@ -927,19 +927,27 @@ get_search_coordinates (xmlNode *node, VlastResults *results)
 {
     gchar *text;
 
-    text = get_child_contents_by_tag (node, "opensearch:itemsPerPage");
+    /* currently last.fm doesn't declare opensearch ns uri!
+     * so, look first for ns tag, in case they have fixed it;
+     * on fail, fallback on checking for tag with ns prefix */
+
+    text = get_child_contents_by_tag (node, "itemsPerPage");
+    if (text == NULL) text = get_child_contents_by_tag (node, "opensearch:itemsPerPage");
     if (text != NULL) results->per_page = atol (text);
     g_free (text);
 
-    text = get_child_contents_by_tag (node, "opensearch:totalResults");
+    text = get_child_contents_by_tag (node, "totalResults");
+    if (text == NULL) text = get_child_contents_by_tag (node, "opensearch:totalResults");
     if (text != NULL) results->total = atol (text);
     g_free (text);
 
-    if (results->per_page < 1) return;
-
-    text = get_child_contents_by_tag (node, "opensearch:startIndex");
-    if (text != NULL) results->page_num = atol (text) / results->per_page + 1;
-    g_free (text);
+    if (results->per_page > 0)
+    {
+        text = get_child_contents_by_tag (node, "startIndex");
+        if (text == NULL) text = get_child_contents_by_tag (node, "opensearch:startIndex");
+        if (text != NULL) results->page_num = atol (text) / results->per_page + 1;
+        g_free (text);
+    }
 
     DBG("srch coords: %d %d %d", results->page_num, results->per_page, results->total);
 }
