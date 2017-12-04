@@ -220,6 +220,149 @@ load_config ()
 }
 
 
+/* silently ignore superfluous options */
+static void
+remove_extra_options ()
+{
+    const gchar *p;
+
+    DBG("OPTS: removing superfluous options %s",
+                methods[profile.method][METH_STR_FORB]);
+    for (p = methods[profile.method][METH_STR_FORB]; *p != '\0'; p++)
+    {
+        switch (*p)
+        {
+            case 'U':
+                g_free (profile.user);
+                profile.user = NULL;
+                break;
+
+            case 'A':
+                g_free (profile.artist);
+                profile.artist = NULL;
+                break;
+
+            case 'T':
+                g_free (profile.track);
+                profile.track = NULL;
+                break;
+
+            case 'B':
+                g_free (profile.album);
+                profile.album = NULL;
+                break;
+
+            case 'G':
+                g_free (profile.tag);
+                profile.tag = NULL;
+                break;
+
+            case 'P':
+                profile.period = -1;
+                break;
+
+            case 'Y':
+                profile.tagtype = -1;
+                break;
+
+            case 'S':
+                profile.starts = -1;
+                break;
+
+            case 'E':
+                profile.ends = -1;
+                break;
+
+            case 'N':
+                profile.num_page = -1;
+                break;
+
+            case 'L':
+                profile.limit = -1;
+                break;
+        }
+    }
+}
+
+
+/* check all mandatory options are present
+ * return TRUE on success*/
+static gboolean
+check_mandatory_options ()
+{
+    const gchar *p;
+    gboolean retval = TRUE;
+
+    DBG("OPTS: checking mandatory options %s present",
+                methods[profile.method][METH_STR_MAND]);
+    for (p = methods[profile.method][METH_STR_MAND]; *p != '\0'; p++)
+    {
+        switch (*p)
+        {
+            case 'U':
+                if (profile.user == NULL)
+                {
+                    ERR("OPTS: need user for this method");
+                    retval = FALSE;
+                }
+                break;
+
+            case 'A':
+                if (profile.artist == NULL)
+                {
+                    ERR("OPTS: need artist for this method");
+                    retval = FALSE;
+                }
+                break;
+
+            case 'B':
+                if (profile.album == NULL)
+                {
+                    ERR("OPTS: need album for this method");
+                    retval = FALSE;
+                }
+                break;
+
+            case 'T':
+                if (profile.track == NULL)
+                {
+                    ERR("OPTS: need track for this method");
+                    retval = FALSE;
+                }
+                break;
+
+            case 'G':
+                if (profile.tag == NULL)
+                {
+                    ERR("OPTS: need tag for this method");
+                    retval = FALSE;
+                }
+                break;
+
+            case 'C':
+                if (profile.country == NULL)
+                {
+                    ERR("OPTS: need country for this method");
+                    retval = FALSE;
+                }
+                break;
+
+            case 'Y':
+                if (profile.tagtype < 0)
+                {
+                    ERR("OPTS: need tagtype for this method");
+                    retval = FALSE;
+                }
+                break;
+        }
+    }
+
+    return retval;
+}
+
+
+/* parse & validate command line options
+ * return TRUE on success */
 static gboolean
 load_options (int *argc, char ***argv)
 {
@@ -443,121 +586,9 @@ load_options (int *argc, char ***argv)
         /* skip method-related options if method was invalid */
         if (profile.method < 0) goto exit_opts;
 
-        /* check all mandatory options are present */
-        DBG("OPTS: checking mandatory options %s present",
-                    methods[profile.method][METH_STR_MAND]);
-        for (i = 0; i < strlen (methods[profile.method][METH_STR_MAND]); i++)
-        {
-            switch (methods[profile.method][METH_STR_MAND][i])
-            {
-                case 'U':
-                    if (profile.user == NULL)
-                    {
-                        ERR("OPTS: need user for this method");
-                        retval = FALSE;
-                    }
-                    break;
+        if (!check_mandatory_options ()) retval = FALSE;
 
-                case 'A':
-                    if (profile.artist == NULL)
-                    {
-                        ERR("OPTS: need artist for this method");
-                        retval = FALSE;
-                    }
-                    break;
-
-                case 'B':
-                    if (profile.album == NULL)
-                    {
-                        ERR("OPTS: need album for this method");
-                        retval = FALSE;
-                    }
-                    break;
-
-                case 'T':
-                    if (profile.track == NULL)
-                    {
-                        ERR("OPTS: need track for this method");
-                        retval = FALSE;
-                    }
-                    break;
-
-                case 'G':
-                    if (profile.tag == NULL)
-                    {
-                        ERR("OPTS: need tag for this method");
-                        retval = FALSE;
-                    }
-                    break;
-
-                case 'C':
-                    if (profile.country == NULL)
-                    {
-                        ERR("OPTS: need country for this method");
-                        retval = FALSE;
-                    }
-                    break;
-
-                case 'Y':
-                    if (profile.tagtype < 0)
-                    {
-                        ERR("OPTS: need tagtype for this method");
-                        retval = FALSE;
-                    }
-                    break;
-            }
-        }
-
-        /* ignore superfluous options */
-        DBG("OPTS: removing superfluous options %s",
-                    methods[profile.method][METH_STR_FORB]);
-        for (i = 0; i < strlen (methods[profile.method][METH_STR_FORB]); i++)
-        {
-            switch (methods[profile.method][METH_STR_FORB][i])
-            {
-                case 'U':
-                    g_free (profile.user);
-                    profile.user = NULL;
-                    break;
-
-                case 'A':
-                    g_free (profile.artist);
-                    profile.artist = NULL;
-                    break;
-
-                case 'T':
-                    g_free (profile.track);
-                    profile.track = NULL;
-                    break;
-
-                case 'B':
-                    g_free (profile.album);
-                    profile.album = NULL;
-                    break;
-
-                case 'G':
-                    g_free (profile.tag);
-                    profile.tag = NULL;
-                    break;
-
-                case 'P':
-                    profile.period = -1;
-                    break;
-
-                case 'Y':
-                    profile.tagtype = -1;
-                    break;
-
-                case 'S':
-                    profile.starts = -1;
-                    break;
-
-                case 'E':
-                    profile.ends = -1;
-                    break;
-
-            }
-        }
+        remove_extra_options ();
     }
 
 
