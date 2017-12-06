@@ -3,13 +3,14 @@
 #include <string.h>
 #include <time.h>
 #include <locale.h>
+#include <unistd.h>
 #include <glib.h>
 #include <curl/curl.h>
 
 #include "vlast.h"
 
 
-VlastData profile = {FALSE, FALSE, -1, -1, -1, -1, -1, -1, -1, -1,
+VlastData profile = {FALSE, FALSE, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 VlastBuffer xml_buf = {NULL, 0, 0};
 
@@ -140,6 +141,100 @@ index_image_size (const gchar *img_size)
     }
 
     return -1;
+}
+
+
+/* parse page num/range
+ * return TRUE on error */
+static gboolean
+get_page_range (const gchar *page_str)
+{
+    gchar *eptr;
+    gint first_page = 0, last_page = 0;
+
+    if (page_str == NULL) return FALSE;
+    if (page_str[0] == '\0') return TRUE;
+
+    first_page = strtol (page_str, &eptr, 0);
+    if (first_page < 1)
+    {
+        return TRUE;
+    }
+    if (eptr[0] == '\0')
+    {
+        profile.num_page = first_page;
+
+        return FALSE;
+    }
+    if (eptr[0] != '-' || eptr[1] == '\0')
+    {
+        return TRUE;
+    }
+    last_page = strtol (eptr + 1, &eptr, 0);
+    if (eptr[0] != '\0')
+    {
+        return TRUE;
+    }
+    if (last_page >= first_page)
+    {
+        profile.num_page = first_page;
+        profile.last_page = last_page;
+
+        return FALSE;
+    }
+    else
+    {
+        return TRUE;
+    }
+}
+
+
+/* when processing multiple pages, check filename contains
+ * single number format '%[0-9]*d'
+ * return TRUE on error */
+static gboolean
+check_xml_filename ()
+{
+    gint i;
+    gboolean have_pc = FALSE;
+    const gchar *p;
+    gchar *eptr;
+
+    /* nothing to do if range not requested or no file in/out */
+    if (profile.last_page < 1 || profile.xml_file == NULL )
+    {
+        DBG("FILECHECK: no check necessary");
+
+        return FALSE;
+    }
+
+    /* check there's a single '%' */
+    for (p = profile.xml_file; *p != '\0'; p++)
+    {
+        if (*p == '%')
+        {
+            if (have_pc) return TRUE;
+            have_pc = TRUE;
+            DBG("FILECECK: got first '%%'");
+
+            p++;
+            if (*p == '\0') return TRUE;
+            if (*p == '0')
+            {
+                p++;
+                if (*p == '\0') return TRUE;
+                DBG("FILECECK: got '0' padding");
+            }
+            i = strtol (p, &eptr, 10);
+            DBG("FILECECK: got precision %d", i);
+            if (i < 0) return TRUE;
+            if (*eptr != 'd') return TRUE;
+            DBG("FILECECK: got 'd' specifier");
+            p = eptr;
+        }
+    }
+
+    return (!have_pc);
 }
 
 
@@ -275,6 +370,7 @@ remove_extra_options ()
 
             case 'N':
                 profile.num_page = -1;
+                profile.last_page = -1;
                 profile.limit = -1;
                 break;
         }
@@ -364,10 +460,10 @@ static gboolean
 load_options (int *argc, char ***argv)
 {
     gchar *method = NULL, *period = NULL, *input_file = NULL, *tagtype = NULL;
-    gchar *img_size = NULL;
+    gchar *img_size = NULL, *page_str = NULL;
     gboolean retval, mlist = FALSE, plist = FALSE, ilist = FALSE;
     gint i;
-    gint starts = -1, ends = -1, limit = -1, num_page = -1;
+    gint starts = -1, ends = -1, limit = -1;
     GError *error = NULL;
     GOptionContext *context;
     GOptionEntry entries[] = {
@@ -389,8 +485,8 @@ load_options (int *argc, char ***argv)
             "for ISO 3166-1 country name C (geo charts)", "C" },
         { "limit",    'l',    0, G_OPTION_ARG_INT, &limit,
             "fetch L items per page", "L" },
-        { "page-num", 'n',    0, G_OPTION_ARG_INT, &num_page,
-            "fetch page number N (1..)", "N" },
+        { "page-num", 'n',    0, G_OPTION_ARG_STRING, &page_str,
+            "fetch page number N or range N1-N2", "N|N1-N2" },
         { "period",   'p',    0, G_OPTION_ARG_STRING, &period,
             "fetch data for period P", "P" },
         { "starts",    0,     0, G_OPTION_ARG_INT, &starts,
@@ -503,8 +599,20 @@ load_options (int *argc, char ***argv)
         g_free (img_size);
     }
 
+    if (get_page_range (page_str))
+    {
+        ERR("OPTS: invalid page number/range");
+
+        retval = FALSE;
+    }
+    DBG("OPTS: requested page range %d->%d", profile.num_page, profile.last_page);
+
     /* check API options */
-    if (!profile.from_file)
+    if (profile.from_file)
+    {
+        if (profile.last_page < 1) profile.num_page = -1;
+    }
+    else
     {
         if (method == NULL)
         {
@@ -578,7 +686,6 @@ load_options (int *argc, char ***argv)
         if (starts > 0) profile.starts = starts;
         if (ends > 0) profile.ends = ends;
         if (limit > 0) profile.limit = limit;
-        if (num_page > 0) profile.num_page = num_page;
 
         /* skip method-related options if method was invalid */
         if (profile.method < 0) goto exit_opts;
@@ -590,8 +697,16 @@ load_options (int *argc, char ***argv)
 
 
 exit_opts:
+    if (check_xml_filename ())
+    {
+        retval = FALSE;
+
+        ERR("if page range requested, filename must contain one format specification");
+    }
+
     g_free (method);
     g_free (period);
+    g_free (page_str);
 
     return retval;
 }
@@ -649,13 +764,29 @@ param_append_int (gchar **string, const gchar *param, gint value)
 static gboolean
 load_xml_from_file ()
 {
+    gchar *filename;
     gboolean retval;
     GError *error = NULL;
 
-    retval = g_file_get_contents (profile.xml_file,
-                                  &xml_buf.buffer,
-                                  &xml_buf.windex,
-                                  &error);
+    if (profile.last_page > 0)
+    {
+        filename = g_strdup_printf (profile.xml_file, profile.num_page);
+
+        DBG("FILE: loading file %s", filename);
+        retval = g_file_get_contents (filename,
+                                      &xml_buf.buffer,
+                                      &xml_buf.windex,
+                                      &error);
+        g_free (filename);
+    }
+    else
+    {
+        DBG("FILE: loading file %s", profile.xml_file);
+        retval = g_file_get_contents (profile.xml_file,
+                                      &xml_buf.buffer,
+                                      &xml_buf.windex,
+                                      &error);
+    }
 
     if (retval)
     {
@@ -675,7 +806,7 @@ load_xml_from_file ()
 static gboolean
 make_request ()
 {
-    gchar *request;
+    gchar *request, *filename;
     gboolean retval = TRUE;
     GError *error = NULL;
     CURL *curl;
@@ -711,6 +842,8 @@ make_request ()
     DBG("RQ: url = %s", request);
     //exit(0);
 
+    /* reset position in buffer */
+    xml_buf.windex = 0;
 
     curl = curl_easy_init ();
     if (curl == NULL)
@@ -726,12 +859,31 @@ make_request ()
 
     res = curl_easy_perform (curl);
 
-    if (profile.xml_file != NULL &&
-        !g_file_set_contents (profile.xml_file, xml_buf.buffer, xml_buf.windex, &error))
+    if (profile.xml_file != NULL)
     {
-        ERR("RQ: failed to save response:\n     %s", error->message);
+        gboolean fail;
 
-        g_error_free (error);
+        if (profile.last_page > 0)
+        {
+            filename = g_strdup_printf (profile.xml_file, profile.num_page);
+
+            fail = !g_file_set_contents (filename, xml_buf.buffer,
+                                            xml_buf.windex, &error);
+
+            g_free (filename);
+        }
+        else
+        {
+            fail = !g_file_set_contents (profile.xml_file, xml_buf.buffer,
+                                            xml_buf.windex, &error);
+        }
+
+        if (fail)
+        {
+            ERR("RQ: failed to save response:\n     %s", error->message);
+
+            g_error_free (error);
+        }
     }
 
     curl_easy_cleanup (curl);
@@ -775,27 +927,41 @@ free_profile ()
 int
 main (int argc, char **argv)
 {
-    gboolean retval;
+    gboolean okay;
 
-    retval = load_options (&argc, &argv);
+    okay = load_options (&argc, &argv);
 
-    if (retval) load_config ();
+    if (okay) load_config ();
 
-    if (retval)
+    DBG("MAIN: okay:%d pages:%d->%d", okay, profile.num_page, profile.last_page);
+
+    while (okay && (profile.last_page < 1 || profile.num_page <= profile.last_page))
     {
+        DBG("MAIN: page:%d", profile.num_page);
         if (profile.from_file)
         {
-            retval = load_xml_from_file ();
+            okay = load_xml_from_file ();
         }
         else
         {
-            retval = make_request ();
+            okay = make_request ();
+        }
+
+        if (okay) okay = load_xml_doc ();
+
+        /* if page range not set we're done */
+        if (profile.last_page < 1) break;
+
+        profile.num_page++;
+
+        /* crude rate-limiting if fetching multiple pages */
+        if (!profile.from_file && profile.num_page <= profile.last_page)
+        {
+            usleep (200000);
         }
     }
 
-    if (retval) retval = load_xml_doc ();
-
     free_profile ();
 
-    return !retval;
+    return !okay;
 }

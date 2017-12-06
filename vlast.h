@@ -15,6 +15,7 @@ typedef struct _VlastData
     gint        ends;
     gint        limit;
     gint        num_page;
+    gint        last_page;
     gint        img_size;
     gchar      *api_key;
     gchar      *time_format;
