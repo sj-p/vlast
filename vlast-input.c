@@ -10,7 +10,7 @@
 #include "vlast.h"
 
 
-VlastData profile = {FALSE, FALSE, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+VlastData profile = {FALSE, FALSE, FALSE, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 VlastBuffer xml_buf = {NULL, 0, 0};
 
@@ -505,6 +505,8 @@ load_options (int *argc, char ***argv)
             "print date/time using format string T", "T" },
         { "image-size", 'I', 0, G_OPTION_ARG_STRING, &img_size,
             "print image URLs for size I (default: no urls)", "I" },
+        { "wiki-full", 'w', 0, G_OPTION_ARG_NONE, &profile.wiki_full,
+            "print full wiki text (default: summary only)", NULL },
         { "list-methods",  0, 0, G_OPTION_ARG_NONE, &mlist,
             "list supported methods, then exit", NULL },
         { "list-periods",  0, 0, G_OPTION_ARG_NONE, &plist,

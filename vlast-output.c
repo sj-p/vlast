@@ -180,6 +180,27 @@ build_indent (VlastResults *results)
 
 
 static void
+add_blank_line (VlastResults *results)
+{
+    gchar *temp_str;
+
+    if (results == NULL) return;
+
+    if (results->output == NULL)
+    {
+        temp_str = g_strdup ("\n");
+    }
+    else
+    {
+        temp_str = g_strconcat (results->output, "\n", NULL);
+    }
+
+    g_free (results->output);
+    results->output = temp_str;
+}
+
+
+static void
 add_leader (VlastResults *results, const gchar *title, gint count)
 {
     gchar *leader;
@@ -466,6 +487,42 @@ add_output_image_url (VlastResults *results, xmlNode *first_node)
 
 
 static gboolean
+add_output_wiki (VlastResults *results, xmlNode *first, const gchar *tagname)
+{
+    gchar *text;
+    xmlNode *wiki_node;
+
+    if (results == NULL || first == NULL || tagname == NULL) return FALSE;
+
+    wiki_node = get_child_node_by_tag (first, tagname);
+    if (wiki_node == NULL) return FALSE;
+
+    text = get_child_contents_by_tag (wiki_node->children,
+                                      (profile.wiki_full ? "content" : "summary"));
+    if (text != NULL)
+    {
+        gchar *temp_str;
+
+        add_output_string (results, "wiki", "");
+
+        temp_str = g_strconcat (results->output, text, "\n", NULL);
+
+        g_free (results->output);
+
+        results->output = temp_str;
+
+        g_free (text);
+
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+}
+
+
+static gboolean
 proc_artist_info (xmlNode *first_node, VlastResults *results, gint count)
 {
     gchar **strs, **str;
@@ -508,6 +565,8 @@ proc_artist_info (xmlNode *first_node, VlastResults *results, gint count)
         }
         g_strfreev (strs);
     }
+
+    add_output_wiki (results, first_node, "bio");
 
     return TRUE;
 }
@@ -598,6 +657,8 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
         g_strfreev (tags);
     }
 
+    add_output_wiki (results, first_node, "wiki");
+
     return TRUE;
 }
 
@@ -622,6 +683,10 @@ proc_tracks (xmlNode *first_node, VlastResults *results)
     if (i == 0)
     {
         add_output_string (results, "", "List of tracks was empty");
+    }
+    else
+    {
+        add_blank_line (results);
     }
 
     return TRUE;
@@ -657,7 +722,17 @@ proc_album_info (xmlNode *first_node, VlastResults *results, gint count)
                              "user plays", FALSE);
 
     tracks = get_child_node_by_tag (first_node, "tracks");
-    if (tracks != NULL) proc_tracks (tracks->children, results);
+    if (tracks != NULL)
+    {
+        add_blank_line (results);
+        add_output_string (results, "tracklist", "");
+
+        ++results->indent;
+        proc_tracks (tracks->children, results);
+        --results->indent;
+    }
+
+    add_output_wiki (results, first_node, "wiki");
 
     return TRUE;
 }
@@ -683,6 +758,10 @@ proc_albums (xmlNode *first_node, VlastResults *results)
     if (i == 0)
     {
         add_output_string (results, "", "List of albums was empty");
+    }
+    else
+    {
+        add_blank_line (results);
     }
 
     return TRUE;
@@ -738,6 +817,10 @@ proc_users (xmlNode *first_node, VlastResults *results)
     {
         add_output_string (results, "", "List of users was empty");
     }
+    else
+    {
+        add_blank_line (results);
+    }
 
     return TRUE;
 }
@@ -755,6 +838,8 @@ proc_tag_info (xmlNode *first_node, VlastResults *results, gint count)
     add_output_int_from_tag (results, first_node, "reach", "taggers", FALSE);
 
     add_output_int_from_tag (results, first_node, "total", "times used", FALSE);
+
+    add_output_wiki (results, first_node, "wiki");
 
     return TRUE;
 }
@@ -780,6 +865,10 @@ proc_tags (xmlNode *first_node, VlastResults *results)
     if (i == 0)
     {
         add_output_string (results, "", "List of tags was empty");
+    }
+    else
+    {
+        add_blank_line (results);
     }
 
     return TRUE;

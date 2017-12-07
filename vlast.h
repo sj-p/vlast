@@ -8,6 +8,7 @@ typedef struct _VlastData
 {
     gboolean    debug;
     gboolean    from_file;
+    gboolean    wiki_full;
     gint        method;
     gint        period;
     gint        tagtype;
