@@ -942,7 +942,9 @@ make_request ()
 
     res = curl_easy_perform (curl);
 
-    if (profile.xml_file != NULL)
+    /* save data in buffer if filename set
+     * regardless of whether curl succeeded */
+    if (profile.xml_file != NULL && xml_buf.buffer != NULL && xml_buf.windex > 0)
     {
         gboolean fail;
 
