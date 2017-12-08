@@ -20,6 +20,7 @@ typedef struct _VlastData
     gint        last_page;
     gint        img_size;
     gint        lang;
+    gint        autocorrect;
     gchar      *api_key;
     gchar      *time_format;
     gchar      *xml_file;

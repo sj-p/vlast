@@ -11,7 +11,7 @@
 
 
 VlastData profile = {FALSE, FALSE, FALSE, FALSE,
-                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 VlastBuffer xml_buf = {NULL, 0, 0};
 
@@ -23,58 +23,60 @@ const gint num_imgsizes = sizeof (imgsizes) / sizeof (gchar*);
 const gchar *languages[] = {"de", "en", "es", "fr", "it", "ja", "pl", "pt",
                             "ru", "sv", "tr", "zh", NULL};
 
+const gchar *autocorrects[] = {"0", "1", NULL};
+
 
 /* supported methods:
  *      api name, short api name, xml tag, mandatory params, ignored params,
  *          'from' param name, 'to' param name */
 const gchar *methods[][NUM_METH_STR] =
 {
-    {"user.getinfo",             "u.gi", "user",             "U",  "ABTGPNL",NULL,NULL},
-    {"user.getrecenttracks",     "u.grt","recenttracks",     "U",  "ABTGPL", "from","to"},
-    {"user.gettopartists",       "u.gta","topartists",       "U",  "ABTGL",  NULL,NULL},
-    {"user.gettopalbums",        "u.gtb","topalbums",        "U",  "ABTGL",  NULL,NULL},
-    {"user.gettoptracks",        "u.gtt","toptracks",        "U",  "ABTGL",  NULL,NULL},
-    {"user.gettoptags",          "u.gtg","toptags",          "U",  "ABTGPL", NULL,NULL},
-    {"user.getlovedtracks",      "u.glt","lovedtracks",      "U",  "ABTGPL", NULL,NULL},
-    {"user.getfriends",          "u.gf", "friends",          "U",  "ABTGPL", NULL,NULL},
-    {"user.getweeklyartistchart","u.gac","weeklyartistchart","U",  "ABTGPL", "from","to"},
-    {"user.getweeklyalbumchart", "u.gbc","weeklyalbumchart", "U",  "ABTGPL", "from","to"},
-    {"user.getweeklytrackchart", "u.gtc","weeklytrackchart", "U",  "ABTGPL", "from","to"},
-    {"user.getweeklychartlist",  "u.gcl","weeklychartlist",  "U",  "ABTGPL", NULL,NULL},
+    {"user.getinfo",             "u.gi", "user",             "U",  "ABTGPNLV",NULL,NULL},
+    {"user.getrecenttracks",     "u.grt","recenttracks",     "U",  "ABTGPLV", "from","to"},
+    {"user.gettopartists",       "u.gta","topartists",       "U",  "ABTGLV",  NULL,NULL},
+    {"user.gettopalbums",        "u.gtb","topalbums",        "U",  "ABTGLV",  NULL,NULL},
+    {"user.gettoptracks",        "u.gtt","toptracks",        "U",  "ABTGLV",  NULL,NULL},
+    {"user.gettoptags",          "u.gtg","toptags",          "U",  "ABTGPLV", NULL,NULL},
+    {"user.getlovedtracks",      "u.glt","lovedtracks",      "U",  "ABTGPLV", NULL,NULL},
+    {"user.getfriends",          "u.gf", "friends",          "U",  "ABTGPLV", NULL,NULL},
+    {"user.getweeklyartistchart","u.gac","weeklyartistchart","U",  "ABTGPLV", "from","to"},
+    {"user.getweeklyalbumchart", "u.gbc","weeklyalbumchart", "U",  "ABTGPLV", "from","to"},
+    {"user.getweeklytrackchart", "u.gtc","weeklytrackchart", "U",  "ABTGPLV", "from","to"},
+    {"user.getweeklychartlist",  "u.gcl","weeklychartlist",  "U",  "ABTGPLV", NULL,NULL},
     {"user.getartisttracks",     "u.gat","artisttracks",     "UA", "BTGL",   "starttimestamp","endtimestamp"},
-    {"user.getpersonaltags",     "u.gpg","taggings",         "UGY","ABTPL",  NULL,NULL},
-    {"library.getartists",       "l.ga", "artists",          "U",  "ABTGPL", NULL,NULL},
-    {"artist.getinfo",           "a.gi", "artist",           "A",  "BTGPN",  NULL,NULL},
-    {"artist.getcorrection",     "a.gc", "artist",           "A",  "UBTGPNL",NULL,NULL},
-    {"artist.gettags",           "a.gg", "tags",             "AU", "BTGPL",  NULL,NULL},
-    {"artist.getsimilar",        "a.gs", "similarartists",   "A",  "UBTGPL", NULL,NULL},
-    {"artist.gettopalbums",      "a.gtb","topalbums",        "A",  "UBTGPL", NULL,NULL},
-    {"artist.gettoptracks",      "a.gtt","toptracks",        "A",  "UBTGPL", NULL,NULL},
-    {"artist.gettoptags",        "a.gtg","toptags",          "A",  "UBTGPL", NULL,NULL},
-    {"artist.search",            "a.s",  "results",          "A",  "UBTGPL", NULL,NULL},
-    {"album.getinfo",            "b.gi", "album",            "BA", "TGPN",   NULL,NULL},
-    {"album.gettags",            "b.gg", "tags",             "ABU","TGPL",   NULL,NULL},
-    {"album.gettoptags",         "b.gtg","toptags",          "AB", "UTGPL",  NULL,NULL},
-    {"album.search",             "b.s",  "results",          "B",  "UTGPL",  NULL,NULL},
-    {"track.getinfo",            "t.gi", "track",            "TA", "BGPN",   NULL,NULL},
-    {"track.getcorrection",      "t.gc", "corrections",      "TA", "UBGPNL", NULL,NULL},
-    {"track.gettags",            "t.gg", "tags",             "ATU","BGPL",   NULL,NULL},
-    {"track.getsimilar",         "t.gs", "similartracks",    "TA", "UBGPL",  NULL,NULL},
-    {"track.gettoptags",         "t.gtg","toptags",          "TA", "UBGPL",  NULL,NULL},
-    {"track.search",             "t.s",  "results",          "T",  "UBGPL",  NULL,NULL},
-    {"chart.gettopartists",      "c.ga", "artists",          "",   "UABGTPL",NULL,NULL},
-    {"chart.gettoptracks",       "c.gt", "tracks",           "",   "UABGTPL",NULL,NULL},
-    {"chart.gettoptags",         "c.gg", "tags",             "",   "UABGTPL",NULL,NULL},
-    {"geo.gettopartists",        "geo.a","topartists",       "C",  "UABGTPL",NULL,NULL},
-    {"geo.gettoptracks",         "geo.t","tracks",           "C",  "UABGTPL",NULL,NULL},
-    {"tag.getinfo",              "g.gi", "tag",              "G",  "UABTPN", NULL,NULL},
-    {"tag.getsimilar",           "g.gs", "similartags",      "G",  "UABTPL", NULL,NULL},
-    {"tag.gettopartists",        "g.gta","topartists",       "G",  "UABTPL", NULL,NULL},
-    {"tag.gettopalbums",         "g.gtb","albums",           "G",  "UABTPL", NULL,NULL},
-    {"tag.gettoptracks",         "g.gtt","tracks",           "G",  "UABTPL", NULL,NULL},
-    {"tag.gettoptags",           "g.gtg","toptags",          "",   "UABGTPL",NULL,NULL},
-    {"tag.getweeklychartlist",   "g.gcl","weeklychartlist",  "G",  "UABTPL", NULL,NULL},
-    {NULL,                       NULL,   NULL,               NULL, NULL,    NULL, NULL}
+    {"user.getpersonaltags",     "u.gpg","taggings",         "UGY","ABTPLV",  NULL,NULL},
+    {"library.getartists",       "l.ga", "artists",          "U",  "ABTGPL",  NULL,NULL},
+    {"artist.getinfo",           "a.gi", "artist",           "A",  "BTGPN",   NULL,NULL},
+    {"artist.getcorrection",     "a.gc", "artist",           "A",  "UBTGPNLV",NULL,NULL},
+    {"artist.gettags",           "a.gg", "tags",             "AU", "BTGPL",   NULL,NULL},
+    {"artist.getsimilar",        "a.gs", "similarartists",   "A",  "UBTGPL",  NULL,NULL},
+    {"artist.gettopalbums",      "a.gtb","topalbums",        "A",  "UBTGPL",  NULL,NULL},
+    {"artist.gettoptracks",      "a.gtt","toptracks",        "A",  "UBTGPL",  NULL,NULL},
+    {"artist.gettoptags",        "a.gtg","toptags",          "A",  "UBTGPL",  NULL,NULL},
+    {"artist.search",            "a.s",  "results",          "A",  "UBTGPLV", NULL,NULL},
+    {"album.getinfo",            "b.gi", "album",            "BA", "TGPN",    NULL,NULL},
+    {"album.gettags",            "b.gg", "tags",             "ABU","TGPL",    NULL,NULL},
+    {"album.gettoptags",         "b.gtg","toptags",          "AB", "UTGPL",   NULL,NULL},
+    {"album.search",             "b.s",  "results",          "B",  "UTGPLV",  NULL,NULL},
+    {"track.getinfo",            "t.gi", "track",            "TA", "BGPN",    NULL,NULL},
+    {"track.getcorrection",      "t.gc", "corrections",      "TA", "UBGPNLV", NULL,NULL},
+    {"track.gettags",            "t.gg", "tags",             "ATU","BGPL",    NULL,NULL},
+    {"track.getsimilar",         "t.gs", "similartracks",    "TA", "UBGPL",   NULL,NULL},
+    {"track.gettoptags",         "t.gtg","toptags",          "TA", "UBGPL",   NULL,NULL},
+    {"track.search",             "t.s",  "results",          "T",  "UBGPLV",  NULL,NULL},
+    {"chart.gettopartists",      "c.ga", "artists",          "",   "UABGTPLV",NULL,NULL},
+    {"chart.gettoptracks",       "c.gt", "tracks",           "",   "UABGTPLV",NULL,NULL},
+    {"chart.gettoptags",         "c.gg", "tags",             "",   "UABGTPLV",NULL,NULL},
+    {"geo.gettopartists",        "geo.a","topartists",       "C",  "UABGTPLV",NULL,NULL},
+    {"geo.gettoptracks",         "geo.t","tracks",           "C",  "UABGTPLV",NULL,NULL},
+    {"tag.getinfo",              "g.gi", "tag",              "G",  "UABTPNV", NULL,NULL},
+    {"tag.getsimilar",           "g.gs", "similartags",      "G",  "UABTPLV", NULL,NULL},
+    {"tag.gettopartists",        "g.gta","topartists",       "G",  "UABTPLV", NULL,NULL},
+    {"tag.gettopalbums",         "g.gtb","albums",           "G",  "UABTPLV", NULL,NULL},
+    {"tag.gettoptracks",         "g.gtt","tracks",           "G",  "UABTPLV", NULL,NULL},
+    {"tag.gettoptags",           "g.gtg","toptags",          "",   "UABGTPLV",NULL,NULL},
+    {"tag.getweeklychartlist",   "g.gcl","weeklychartlist",  "G",  "UABTPLV", NULL,NULL},
+    {NULL,                       NULL,   NULL,               NULL, NULL,      NULL,NULL}
 };
 
 
@@ -381,6 +383,10 @@ remove_extra_options ()
             case 'L':
                 profile.lang = -1;
                 break;
+
+            case 'V':
+                profile.autocorrect = -1;
+                break;
         }
     }
 }
@@ -468,7 +474,7 @@ static gboolean
 load_options (int *argc, char ***argv)
 {
     gchar *method = NULL, *period = NULL, *input_file = NULL, *tagtype = NULL;
-    gchar *img_size = NULL, *page_str = NULL, *lang = NULL;
+    gchar *img_size = NULL, *page_str = NULL, *lang = NULL, *autocorrect = NULL;
     gboolean retval, mlist = FALSE, plist = FALSE, ilist = FALSE, llist = FALSE;
     gint i;
     gint starts = -1, ends = -1, limit = -1;
@@ -493,6 +499,8 @@ load_options (int *argc, char ***argv)
             "for ISO 3166-1 country name C (geo charts)", "C" },
         { "lang",     'L',    0, G_OPTION_ARG_STRING, &lang,
             "for language code LL", "LL" },
+        { "autocorrect",'A',  0, G_OPTION_ARG_STRING, &autocorrect,
+            "set autocorrect to state V [0|1]", "V" },
         { "limit",    'l',    0, G_OPTION_ARG_INT, &limit,
             "fetch L items per page", "L" },
         { "page-num", 'n',    0, G_OPTION_ARG_STRING, &page_str,
@@ -728,6 +736,23 @@ load_options (int *argc, char ***argv)
             }
         }
 
+        /* process autocorrect */
+        if (autocorrect != NULL)
+        {
+            for (i = 0; autocorrects[i] != NULL; i++)
+            {
+                if (g_ascii_strcasecmp (autocorrect, autocorrects[i]) == 0)
+                {
+                    profile.autocorrect = i;
+                    break;
+                }
+            }
+            if (profile.autocorrect < 0)
+            {
+                ERR("OPTS: invalid autocorrect state");
+            }
+        }
+
         if (starts > 0) profile.starts = starts;
         if (ends > 0) profile.ends = ends;
         if (limit > 0) profile.limit = limit;
@@ -754,6 +779,7 @@ exit_opts:
     g_free (page_str);
     g_free (tagtype);
     g_free (lang);
+    g_free (autocorrect);
 
     return retval;
 }
@@ -889,6 +915,11 @@ make_request ()
     if (profile.lang >=0)
     {
         param_append_str (&request, "lang", languages[profile.lang]);
+    }
+
+    if (profile.autocorrect >=0)
+    {
+        param_append_str (&request, "autocorrect", autocorrects[profile.autocorrect]);
     }
 
     DBG("RQ: url = %s", request);

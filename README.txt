@@ -87,6 +87,7 @@ Define your request:
     -y, --tagtype=Y         for tagging type Y artist|album|track
     -c, --country=C         for ISO 3166-1 country name C (geo charts)
     -L, --lang=LL           for ISO 639 alpha-2 language code LL
+    -A, --autocorrect=V     set autocorrect to state V [0|1]
 
 Specify bounds on data:
     -l, --limit=L           fetch L items per page
@@ -189,5 +190,3 @@ Lots, I'm sure.
 TODO
 ----
 
-* support API parameter autocorrect
-* add option to skip the processing of fetched xml, i.e. save only
