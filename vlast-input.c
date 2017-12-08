@@ -10,7 +10,7 @@
 #include "vlast.h"
 
 
-VlastData profile = {FALSE, FALSE, FALSE, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+VlastData profile = {FALSE, FALSE, FALSE, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 VlastBuffer xml_buf = {NULL, 0, 0};
 
@@ -19,57 +19,60 @@ const gchar *tagtypes[] = {"artist", "album", "track", NULL};
 const gchar *imgsizes[] = {"small", "medium", "large", "extralarge", "mega", NULL};
 const gint num_imgsizes = sizeof (imgsizes) / sizeof (gchar*);
 
+const gchar *languages[] = {"de", "en", "es", "fr", "it", "ja", "pl", "pt",
+                            "ru", "sv", "tr", "zh", NULL};
+
 
 /* supported methods:
  *      api name, short api name, xml tag, mandatory params, ignored params,
  *          'from' param name, 'to' param name */
 const gchar *methods[][NUM_METH_STR] =
 {
-    {"user.getinfo",             "u.gi", "user",             "U",  "ABTGPN",NULL, NULL},
-    {"user.getrecenttracks",     "u.grt","recenttracks",     "U",  "ABTGP", "from", "to"},
-    {"user.gettopartists",       "u.gta","topartists",       "U",  "ABTG",  NULL, NULL},
-    {"user.gettopalbums",        "u.gtb","topalbums",        "U",  "ABTG",  NULL, NULL},
-    {"user.gettoptracks",        "u.gtt","toptracks",        "U",  "ABTG",  NULL, NULL},
-    {"user.gettoptags",          "u.gtg","toptags",          "U",  "ABTGP", NULL, NULL},
-    {"user.getlovedtracks",      "u.glt","lovedtracks",      "U",  "ABTGP", NULL, NULL},
-    {"user.getfriends",          "u.gf", "friends",          "U",  "ABTGP", NULL, NULL},
-    {"user.getweeklyartistchart","u.gac","weeklyartistchart","U",  "ABTGP", "from", "to"},
-    {"user.getweeklyalbumchart", "u.gbc","weeklyalbumchart", "U",  "ABTGP", "from", "to"},
-    {"user.getweeklytrackchart", "u.gtc","weeklytrackchart", "U",  "ABTGP", "from", "to"},
-    {"user.getweeklychartlist",  "u.gcl","weeklychartlist",  "U",  "ABTGP", NULL, NULL},
-    {"user.getartisttracks",     "u.gat","artisttracks",     "UA", "BTG",   "starttimestamp", "endtimestamp"},
-    {"user.getpersonaltags",     "u.gpg","taggings",         "UGY","ABTP",  NULL, NULL},
-    {"library.getartists",       "l.ga", "artists",          "U",  "ABTGP", NULL, NULL},
-    {"artist.getinfo",           "a.gi", "artist",           "A",  "BTGPN", NULL, NULL},
-    {"artist.getcorrection",     "a.gc", "artist",           "A",  "UBTGPN",NULL, NULL},
-    {"artist.gettags",           "a.gg", "tags",             "AU", "BTGP",  NULL, NULL},
-    {"artist.getsimilar",        "a.gs", "similarartists",   "A",  "UBTGP", NULL, NULL},
-    {"artist.gettopalbums",      "a.gtb","topalbums",        "A",  "UBTGP", NULL, NULL},
-    {"artist.gettoptracks",      "a.gtt","toptracks",        "A",  "UBTGP", NULL, NULL},
-    {"artist.gettoptags",        "a.gtg","toptags",          "A",  "UBTGP", NULL, NULL},
-    {"artist.search",            "a.s",  "results",          "A",  "UBTGP", NULL, NULL},
-    {"album.getinfo",            "b.gi", "album",            "BA", "TGPN",  NULL, NULL},
-    {"album.gettags",            "b.gg", "tags",             "ABU","TGP",   NULL, NULL},
-    {"album.gettoptags",         "b.gtg","toptags",          "AB", "UTGP",  NULL, NULL},
-    {"album.search",             "b.s",  "results",          "B",  "UTGP",  NULL, NULL},
-    {"track.getinfo",            "t.gi", "track",            "TA", "BGPN",  NULL, NULL},
-    {"track.getcorrection",      "t.gc", "corrections",      "TA", "UBGPN", NULL, NULL},
-    {"track.gettags",            "t.gg", "tags",             "ATU","BGP",   NULL, NULL},
-    {"track.getsimilar",         "t.gs", "similartracks",    "TA", "UBGP",  NULL, NULL},
-    {"track.gettoptags",         "t.gtg","toptags",          "TA", "UBGP",  NULL, NULL},
-    {"track.search",             "t.s",  "results",          "T",  "UBGP",  NULL, NULL},
-    {"chart.gettopartists",      "c.ga", "artists",          "",   "UABGTP",NULL, NULL},
-    {"chart.gettoptracks",       "c.gt", "tracks",           "",   "UABGTP",NULL, NULL},
-    {"chart.gettoptags",         "c.gg", "tags",             "",   "UABGTP",NULL, NULL},
-    {"geo.gettopartists",        "geo.a","topartists",       "C",  "UABGTP",NULL, NULL},
-    {"geo.gettoptracks",         "geo.t","tracks",           "C",  "UABGTP",NULL, NULL},
-    {"tag.getinfo",              "g.gi", "tag",              "G",  "UABTPN",NULL, NULL},
-    {"tag.getsimilar",           "g.gs", "similartags",      "G",  "UABTP", NULL, NULL},
-    {"tag.gettopartists",        "g.gta","topartists",       "G",  "UABTP", NULL, NULL},
-    {"tag.gettopalbums",         "g.gtb","albums",           "G",  "UABTP", NULL, NULL},
-    {"tag.gettoptracks",         "g.gtt","tracks",           "G",  "UABTP", NULL, NULL},
-    {"tag.gettoptags",           "g.gtg","toptags",          "",   "UABGTP",NULL, NULL},
-    {"tag.getweeklychartlist",   "g.gcl","weeklychartlist",  "G",  "UABTP", NULL, NULL},
+    {"user.getinfo",             "u.gi", "user",             "U",  "ABTGPNL",NULL,NULL},
+    {"user.getrecenttracks",     "u.grt","recenttracks",     "U",  "ABTGPL", "from","to"},
+    {"user.gettopartists",       "u.gta","topartists",       "U",  "ABTGL",  NULL,NULL},
+    {"user.gettopalbums",        "u.gtb","topalbums",        "U",  "ABTGL",  NULL,NULL},
+    {"user.gettoptracks",        "u.gtt","toptracks",        "U",  "ABTGL",  NULL,NULL},
+    {"user.gettoptags",          "u.gtg","toptags",          "U",  "ABTGPL", NULL,NULL},
+    {"user.getlovedtracks",      "u.glt","lovedtracks",      "U",  "ABTGPL", NULL,NULL},
+    {"user.getfriends",          "u.gf", "friends",          "U",  "ABTGPL", NULL,NULL},
+    {"user.getweeklyartistchart","u.gac","weeklyartistchart","U",  "ABTGPL", "from","to"},
+    {"user.getweeklyalbumchart", "u.gbc","weeklyalbumchart", "U",  "ABTGPL", "from","to"},
+    {"user.getweeklytrackchart", "u.gtc","weeklytrackchart", "U",  "ABTGPL", "from","to"},
+    {"user.getweeklychartlist",  "u.gcl","weeklychartlist",  "U",  "ABTGPL", NULL,NULL},
+    {"user.getartisttracks",     "u.gat","artisttracks",     "UA", "BTGL",   "starttimestamp","endtimestamp"},
+    {"user.getpersonaltags",     "u.gpg","taggings",         "UGY","ABTPL",  NULL,NULL},
+    {"library.getartists",       "l.ga", "artists",          "U",  "ABTGPL", NULL,NULL},
+    {"artist.getinfo",           "a.gi", "artist",           "A",  "BTGPN",  NULL,NULL},
+    {"artist.getcorrection",     "a.gc", "artist",           "A",  "UBTGPNL",NULL,NULL},
+    {"artist.gettags",           "a.gg", "tags",             "AU", "BTGPL",  NULL,NULL},
+    {"artist.getsimilar",        "a.gs", "similarartists",   "A",  "UBTGPL", NULL,NULL},
+    {"artist.gettopalbums",      "a.gtb","topalbums",        "A",  "UBTGPL", NULL,NULL},
+    {"artist.gettoptracks",      "a.gtt","toptracks",        "A",  "UBTGPL", NULL,NULL},
+    {"artist.gettoptags",        "a.gtg","toptags",          "A",  "UBTGPL", NULL,NULL},
+    {"artist.search",            "a.s",  "results",          "A",  "UBTGPL", NULL,NULL},
+    {"album.getinfo",            "b.gi", "album",            "BA", "TGPN",   NULL,NULL},
+    {"album.gettags",            "b.gg", "tags",             "ABU","TGPL",   NULL,NULL},
+    {"album.gettoptags",         "b.gtg","toptags",          "AB", "UTGPL",  NULL,NULL},
+    {"album.search",             "b.s",  "results",          "B",  "UTGPL",  NULL,NULL},
+    {"track.getinfo",            "t.gi", "track",            "TA", "BGPN",   NULL,NULL},
+    {"track.getcorrection",      "t.gc", "corrections",      "TA", "UBGPNL", NULL,NULL},
+    {"track.gettags",            "t.gg", "tags",             "ATU","BGPL",   NULL,NULL},
+    {"track.getsimilar",         "t.gs", "similartracks",    "TA", "UBGPL",  NULL,NULL},
+    {"track.gettoptags",         "t.gtg","toptags",          "TA", "UBGPL",  NULL,NULL},
+    {"track.search",             "t.s",  "results",          "T",  "UBGPL",  NULL,NULL},
+    {"chart.gettopartists",      "c.ga", "artists",          "",   "UABGTPL",NULL,NULL},
+    {"chart.gettoptracks",       "c.gt", "tracks",           "",   "UABGTPL",NULL,NULL},
+    {"chart.gettoptags",         "c.gg", "tags",             "",   "UABGTPL",NULL,NULL},
+    {"geo.gettopartists",        "geo.a","topartists",       "C",  "UABGTPL",NULL,NULL},
+    {"geo.gettoptracks",         "geo.t","tracks",           "C",  "UABGTPL",NULL,NULL},
+    {"tag.getinfo",              "g.gi", "tag",              "G",  "UABTPN", NULL,NULL},
+    {"tag.getsimilar",           "g.gs", "similartags",      "G",  "UABTPL", NULL,NULL},
+    {"tag.gettopartists",        "g.gta","topartists",       "G",  "UABTPL", NULL,NULL},
+    {"tag.gettopalbums",         "g.gtb","albums",           "G",  "UABTPL", NULL,NULL},
+    {"tag.gettoptracks",         "g.gtt","tracks",           "G",  "UABTPL", NULL,NULL},
+    {"tag.gettoptags",           "g.gtg","toptags",          "",   "UABGTPL",NULL,NULL},
+    {"tag.getweeklychartlist",   "g.gcl","weeklychartlist",  "G",  "UABTPL", NULL,NULL},
     {NULL,                       NULL,   NULL,               NULL, NULL,    NULL, NULL}
 };
 
@@ -373,6 +376,10 @@ remove_extra_options ()
                 profile.last_page = -1;
                 profile.limit = -1;
                 break;
+
+            case 'L':
+                profile.lang = -1;
+                break;
         }
     }
 }
@@ -460,8 +467,8 @@ static gboolean
 load_options (int *argc, char ***argv)
 {
     gchar *method = NULL, *period = NULL, *input_file = NULL, *tagtype = NULL;
-    gchar *img_size = NULL, *page_str = NULL;
-    gboolean retval, mlist = FALSE, plist = FALSE, ilist = FALSE;
+    gchar *img_size = NULL, *page_str = NULL, *lang = NULL;
+    gboolean retval, mlist = FALSE, plist = FALSE, ilist = FALSE, llist = FALSE;
     gint i;
     gint starts = -1, ends = -1, limit = -1;
     GError *error = NULL;
@@ -483,6 +490,8 @@ load_options (int *argc, char ***argv)
             "for tagging type Y [artist|album|track]", "Y" },
         { "country",    'c',    0, G_OPTION_ARG_STRING, &profile.country,
             "for ISO 3166-1 country name C (geo charts)", "C" },
+        { "lang",     'L',    0, G_OPTION_ARG_STRING, &lang,
+            "for language code LL", "LL" },
         { "limit",    'l',    0, G_OPTION_ARG_INT, &limit,
             "fetch L items per page", "L" },
         { "page-num", 'n',    0, G_OPTION_ARG_STRING, &page_str,
@@ -513,6 +522,8 @@ load_options (int *argc, char ***argv)
             "list short & long period strings, then exit", NULL },
         { "list-image-sizes",  0, 0, G_OPTION_ARG_NONE, &ilist,
             "list image size names", NULL },
+        { "list-langs",  0, 0, G_OPTION_ARG_NONE, &llist,
+            "list supported language codes", NULL },
         { NULL }
     };
 
@@ -566,7 +577,15 @@ load_options (int *argc, char ***argv)
             printf ("    %s\n", imgsizes[i]);
         }
     }
-    if (mlist || plist || ilist) exit (0);
+    if (llist)
+    {
+        printf ("\nLanguage codes:\n");
+        for (i = 0; languages[i] != 0; i++)
+        {
+            printf ("    %s\n", languages[i]);
+        }
+    }
+    if (mlist || plist || ilist || llist) exit (0);
 
     if (input_file != NULL)
     {
@@ -657,8 +676,6 @@ load_options (int *argc, char ***argv)
             {
                 ERR("OPTS: invalid tagtype");
             }
-
-            g_free (tagtype);
         }
 
         /* decipher period */
@@ -682,6 +699,23 @@ load_options (int *argc, char ***argv)
             {
                 DBG("OPTS: set period to %d (%s)", profile.period,
                                                    periods[profile.period][PER_STR_API]);
+            }
+        }
+
+        /* process language */
+        if (lang != NULL)
+        {
+            for (i = 0; languages[i] != NULL; i++)
+            {
+                if (g_ascii_strcasecmp (lang, languages[i]) == 0)
+                {
+                    profile.lang = i;
+                    break;
+                }
+            }
+            if (profile.lang < 0)
+            {
+                ERR("OPTS: invalid language code");
             }
         }
 
@@ -709,6 +743,8 @@ exit_opts:
     g_free (method);
     g_free (period);
     g_free (page_str);
+    g_free (tagtype);
+    g_free (lang);
 
     return retval;
 }
@@ -839,6 +875,11 @@ make_request ()
     if (profile.tagtype >=0)
     {
         param_append_str (&request, "taggingtype", tagtypes[profile.tagtype]);
+    }
+
+    if (profile.lang >=0)
+    {
+        param_append_str (&request, "lang", languages[profile.lang]);
     }
 
     DBG("RQ: url = %s", request);
