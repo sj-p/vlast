@@ -99,6 +99,7 @@ Output control:
     -T, --time-format=T     print date/time using format string T
     -I, --image-size=I      print image URLs for size I (default: no urls)
     -w, --wiki-full         print full wiki text (default: summary only)
+    -q, --quiet             don't print output after saving xml file
 
 XML files:
     -o, --outfile=F         output returned xml to file F

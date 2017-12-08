@@ -10,7 +10,8 @@
 #include "vlast.h"
 
 
-VlastData profile = {FALSE, FALSE, FALSE, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+VlastData profile = {FALSE, FALSE, FALSE, FALSE,
+                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 VlastBuffer xml_buf = {NULL, 0, 0};
 
@@ -516,6 +517,8 @@ load_options (int *argc, char ***argv)
             "print image URLs for size I (default: no urls)", "I" },
         { "wiki-full", 'w', 0, G_OPTION_ARG_NONE, &profile.wiki_full,
             "print full wiki text (default: summary only)", NULL },
+        { "quiet", 'q', 0, G_OPTION_ARG_NONE, &profile.quiet,
+            "don't print output after saving xml file", NULL },
         { "list-methods",  0, 0, G_OPTION_ARG_NONE, &mlist,
             "list supported methods, then exit", NULL },
         { "list-periods",  0, 0, G_OPTION_ARG_NONE, &plist,
@@ -632,6 +635,8 @@ load_options (int *argc, char ***argv)
     if (profile.from_file)
     {
         if (profile.last_page < 1) profile.num_page = -1;
+
+        profile.quiet = FALSE;
     }
     else
     {
@@ -658,6 +663,10 @@ load_options (int *argc, char ***argv)
                 ERR("OPTS: method not supported");
 
                 retval = FALSE;
+            }
+            else if (profile.xml_file == NULL)
+            {
+                profile.quiet = FALSE;
             }
         }
 
@@ -990,7 +999,10 @@ main (int argc, char **argv)
             okay = make_request ();
         }
 
-        if (okay) okay = load_xml_doc ();
+        if (okay && !profile.quiet)
+        {
+            okay = load_xml_doc ();
+        }
 
         /* if page range not set we're done */
         if (profile.last_page < 1) break;
