@@ -10,11 +10,12 @@ typedef struct _VlastData
     gboolean    from_file;
     gboolean    wiki_full;
     gboolean    quiet;
+    gboolean    sign_rq;
     gint        method;
     gint        period;
     gint        tagtype;
-    gint        starts;
-    gint        ends;
+    gint        time1;
+    gint        time2;
     gint        limit;
     gint        num_page;
     gint        last_page;
@@ -22,6 +23,8 @@ typedef struct _VlastData
     gint        lang;
     gint        autocorrect;
     gchar      *api_key;
+    gchar      *api_secret;
+    gchar      *token;
     gchar      *time_format;
     gchar      *xml_file;
     gchar      *config_file;
@@ -54,11 +57,10 @@ enum
 {
     METH_STR_API = 0,
     METH_STR_SHORT,
-    METH_STR_XML,
     METH_STR_MAND,
     METH_STR_FORB,
-    METH_STR_START,
-    METH_STR_END,
+    METH_STR_TIME1,
+    METH_STR_TIME2,
     NUM_METH_STR
 };
 
@@ -76,7 +78,7 @@ enum
 
 
 gboolean load_xml_doc ();
+gboolean vlast_sk_save ();
 gint index_image_size (const gchar *img_size);
-
 
 #endif

@@ -5,14 +5,15 @@
 #include <locale.h>
 #include <unistd.h>
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <curl/curl.h>
 
 #include "vlast.h"
 
 
-VlastData profile = {FALSE, FALSE, FALSE, FALSE,
+VlastData profile = {FALSE, FALSE, FALSE, FALSE, FALSE,
                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 VlastBuffer xml_buf = {NULL, 0, 0};
 
 const gchar *tagtypes[] = {"artist", "album", "track", NULL};
@@ -27,56 +28,62 @@ const gchar *autocorrects[] = {"0", "1", NULL};
 
 
 /* supported methods:
- *      api name, short api name, xml tag, mandatory params, ignored params,
- *          'from' param name, 'to' param name */
+ *      api name, short api name, mandatory params, ignored params,
+ *          'time1' param name, 'time2' param name */
 const gchar *methods[][NUM_METH_STR] =
 {
-    {"user.getinfo",             "u.gi", "user",             "U",  "ABTGPNLV",NULL,NULL},
-    {"user.getrecenttracks",     "u.grt","recenttracks",     "U",  "ABTGPLV", "from","to"},
-    {"user.gettopartists",       "u.gta","topartists",       "U",  "ABTGLV",  NULL,NULL},
-    {"user.gettopalbums",        "u.gtb","topalbums",        "U",  "ABTGLV",  NULL,NULL},
-    {"user.gettoptracks",        "u.gtt","toptracks",        "U",  "ABTGLV",  NULL,NULL},
-    {"user.gettoptags",          "u.gtg","toptags",          "U",  "ABTGPLV", NULL,NULL},
-    {"user.getlovedtracks",      "u.glt","lovedtracks",      "U",  "ABTGPLV", NULL,NULL},
-    {"user.getfriends",          "u.gf", "friends",          "U",  "ABTGPLV", NULL,NULL},
-    {"user.getweeklyartistchart","u.gac","weeklyartistchart","U",  "ABTGPLV", "from","to"},
-    {"user.getweeklyalbumchart", "u.gbc","weeklyalbumchart", "U",  "ABTGPLV", "from","to"},
-    {"user.getweeklytrackchart", "u.gtc","weeklytrackchart", "U",  "ABTGPLV", "from","to"},
-    {"user.getweeklychartlist",  "u.gcl","weeklychartlist",  "U",  "ABTGPLV", NULL,NULL},
-    {"user.getartisttracks",     "u.gat","artisttracks",     "UA", "BTGL",   "starttimestamp","endtimestamp"},
-    {"user.getpersonaltags",     "u.gpg","taggings",         "UGY","ABTPLV",  NULL,NULL},
-    {"library.getartists",       "l.ga", "artists",          "U",  "ABTGPL",  NULL,NULL},
-    {"artist.getinfo",           "a.gi", "artist",           "A",  "BTGPN",   NULL,NULL},
-    {"artist.getcorrection",     "a.gc", "artist",           "A",  "UBTGPNLV",NULL,NULL},
-    {"artist.gettags",           "a.gg", "tags",             "AU", "BTGPL",   NULL,NULL},
-    {"artist.getsimilar",        "a.gs", "similarartists",   "A",  "UBTGPL",  NULL,NULL},
-    {"artist.gettopalbums",      "a.gtb","topalbums",        "A",  "UBTGPL",  NULL,NULL},
-    {"artist.gettoptracks",      "a.gtt","toptracks",        "A",  "UBTGPL",  NULL,NULL},
-    {"artist.gettoptags",        "a.gtg","toptags",          "A",  "UBTGPL",  NULL,NULL},
-    {"artist.search",            "a.s",  "results",          "A",  "UBTGPLV", NULL,NULL},
-    {"album.getinfo",            "b.gi", "album",            "BA", "TGPN",    NULL,NULL},
-    {"album.gettags",            "b.gg", "tags",             "ABU","TGPL",    NULL,NULL},
-    {"album.gettoptags",         "b.gtg","toptags",          "AB", "UTGPL",   NULL,NULL},
-    {"album.search",             "b.s",  "results",          "B",  "UTGPLV",  NULL,NULL},
-    {"track.getinfo",            "t.gi", "track",            "TA", "BGPN",    NULL,NULL},
-    {"track.getcorrection",      "t.gc", "corrections",      "TA", "UBGPNLV", NULL,NULL},
-    {"track.gettags",            "t.gg", "tags",             "ATU","BGPL",    NULL,NULL},
-    {"track.getsimilar",         "t.gs", "similartracks",    "TA", "UBGPL",   NULL,NULL},
-    {"track.gettoptags",         "t.gtg","toptags",          "TA", "UBGPL",   NULL,NULL},
-    {"track.search",             "t.s",  "results",          "T",  "UBGPLV",  NULL,NULL},
-    {"chart.gettopartists",      "c.ga", "artists",          "",   "UABGTPLV",NULL,NULL},
-    {"chart.gettoptracks",       "c.gt", "tracks",           "",   "UABGTPLV",NULL,NULL},
-    {"chart.gettoptags",         "c.gg", "tags",             "",   "UABGTPLV",NULL,NULL},
-    {"geo.gettopartists",        "geo.a","topartists",       "C",  "UABGTPLV",NULL,NULL},
-    {"geo.gettoptracks",         "geo.t","tracks",           "C",  "UABGTPLV",NULL,NULL},
-    {"tag.getinfo",              "g.gi", "tag",              "G",  "UABTPNV", NULL,NULL},
-    {"tag.getsimilar",           "g.gs", "similartags",      "G",  "UABTPLV", NULL,NULL},
-    {"tag.gettopartists",        "g.gta","topartists",       "G",  "UABTPLV", NULL,NULL},
-    {"tag.gettopalbums",         "g.gtb","albums",           "G",  "UABTPLV", NULL,NULL},
-    {"tag.gettoptracks",         "g.gtt","tracks",           "G",  "UABTPLV", NULL,NULL},
-    {"tag.gettoptags",           "g.gtg","toptags",          "",   "UABGTPLV",NULL,NULL},
-    {"tag.getweeklychartlist",   "g.gcl","weeklychartlist",  "G",  "UABTPLV", NULL,NULL},
-    {NULL,                       NULL,   NULL,               NULL, NULL,      NULL,NULL}
+    {"auth.gettoken",            "au.gt","*",    "KUABTGPNLVY",NULL,NULL},
+    {"auth.getsession",          "au.gs","*K",   "UABTGPNLVY", NULL,NULL},
+    {"user.getinfo",             "u.gi", "U",    "KABTGPNLV",  NULL,NULL},
+    {"user.getrecenttracks",     "u.grt","U",    "KABTGPLV",   "from","to"},
+    {"user.gettopartists",       "u.gta","U",    "KABTGLV",    NULL,NULL},
+    {"user.gettopalbums",        "u.gtb","U",    "KABTGLV",    NULL,NULL},
+    {"user.gettoptracks",        "u.gtt","U",    "KABTGLV",    NULL,NULL},
+    {"user.gettoptags",          "u.gtg","U",    "KABTGPLV",   NULL,NULL},
+    {"user.getlovedtracks",      "u.glt","U",    "KABTGPLV",   NULL,NULL},
+    {"user.getfriends",          "u.gf", "U",    "KABTGPLV",   NULL,NULL},
+    {"user.getweeklyartistchart","u.gac","U",    "KABTGPLV",   "from","to"},
+    {"user.getweeklyalbumchart", "u.gbc","U",    "KABTGPLV",   "from","to"},
+    {"user.getweeklytrackchart", "u.gtc","U",    "KABTGPLV",   "from","to"},
+    {"user.getweeklychartlist",  "u.gcl","U",    "KABTGPLV",   NULL,NULL},
+    {"user.getartisttracks",     "u.gat","UA",   "KBTGL",      "starttimestamp","endtimestamp"},
+    {"user.getpersonaltags",     "u.gpg","UGY",  "KABTPLV",    NULL,NULL},
+    {"library.getartists",       "l.ga", "U",    "KABTGPL",    NULL,NULL},
+    {"artist.getinfo",           "a.gi", "A",    "KBTGPN",     NULL,NULL},
+    {"artist.getcorrection",     "a.gc", "A",    "KUBTGPNLV",  NULL,NULL},
+    {"artist.gettags",           "a.gg", "AU",   "KBTGPL",     NULL,NULL},
+    {"artist.getsimilar",        "a.gs", "A",    "KUBTGPL",    NULL,NULL},
+    {"artist.gettopalbums",      "a.gtb","A",    "KUBTGPL",    NULL,NULL},
+    {"artist.gettoptracks",      "a.gtt","A",    "KUBTGPL",    NULL,NULL},
+    {"artist.gettoptags",        "a.gtg","A",    "KUBTGPL",    NULL,NULL},
+    {"artist.search",            "a.s",  "A",    "KUBTGPLV",   NULL,NULL},
+    {"album.getinfo",            "b.gi", "BA",   "KTGPN",      NULL,NULL},
+    {"album.gettags",            "b.gg", "ABU",  "KTGPL",      NULL,NULL},
+    {"album.gettoptags",         "b.gtg","AB",   "KUTGPL",     NULL,NULL},
+    {"album.search",             "b.s",  "B",    "KUTGPLV",    NULL,NULL},
+    {"track.getinfo",            "t.gi", "TA",   "KBGPN",      NULL,NULL},
+    {"track.getcorrection",      "t.gc", "TA",   "KUBGPNLV",   NULL,NULL},
+    {"track.gettags",            "t.gg", "ATU",  "KBGPL",      NULL,NULL},
+    {"track.getsimilar",         "t.gs", "TA",   "KUBGPL",     NULL,NULL},
+    {"track.gettoptags",         "t.gtg","TA",   "KUBGPL",     NULL,NULL},
+    {"track.search",             "t.s",  "T",    "KUBGPLV",    NULL,NULL},
+    {"track.scrobble",           "t.scr","*UAT1","KGPLVY",     "timestamp","duration"},
+    {"track.updatenowplaying",   "t.unp","*UAT", "KGPLVY",     NULL,"duration"},
+    {"track.love",               "t.l",  "*UAT", "KBGPLVY",    NULL,NULL},
+    {"track.unlove",             "t.u",  "*UAT", "KBGPLVY",    NULL,NULL},
+    {"chart.gettopartists",      "c.ga", "",     "KUABGTPLV",  NULL,NULL},
+    {"chart.gettoptracks",       "c.gt", "",     "KUABGTPLV",  NULL,NULL},
+    {"chart.gettoptags",         "c.gg", "",     "KUABGTPLV",  NULL,NULL},
+    {"geo.gettopartists",        "geo.a","C",    "KUABGTPLV",  NULL,NULL},
+    {"geo.gettoptracks",         "geo.t","C",    "KUABGTPLV",  NULL,NULL},
+    {"tag.getinfo",              "g.gi", "G",    "KUABTPNV",   NULL,NULL},
+    {"tag.getsimilar",           "g.gs", "G",    "KUABTPLV",   NULL,NULL},
+    {"tag.gettopartists",        "g.gta","G",    "KUABTPLV",   NULL,NULL},
+    {"tag.gettopalbums",         "g.gtb","G",    "KUABTPLV",   NULL,NULL},
+    {"tag.gettoptracks",         "g.gtt","G",    "KUABTPLV",   NULL,NULL},
+    {"tag.gettoptags",           "g.gtg","",     "KUABGTPLV",  NULL,NULL},
+    {"tag.getweeklychartlist",   "g.gcl","G",    "KUABTPLV",   NULL,NULL},
+    {NULL,                       NULL,   NULL,   NULL,         NULL,NULL}
 };
 
 
@@ -244,10 +251,53 @@ check_xml_filename ()
 }
 
 
+/* return TRUE on success */
+gboolean
+vlast_sk_save ()
+{
+    gboolean success;
+    gchar *sk_dir, *sk_file;
+    GError *error = NULL;
+
+    sk_dir = g_build_filename (g_get_user_data_dir (), "vlast", "sk",
+                                profile.api_key, NULL);
+    if (g_mkdir_with_parents (sk_dir, 0700))
+    {
+        ERR("SK: failed to make dir '%s', can't save session key",
+            sk_dir);
+
+        g_free (sk_dir);
+
+        return FALSE;
+    }
+
+    sk_file = g_build_filename (sk_dir, profile.user, NULL);
+    if (g_file_set_contents (sk_file, profile.token, -1, &error))
+    {
+        (void) g_chmod (sk_file, 0600);
+
+        success = TRUE;
+    }
+    else
+    {
+        ERR("SK: failed to save sk to '%s':\n%s", sk_file, error->message);
+
+        g_error_free (error);
+
+        success = FALSE;
+    }
+
+    g_free (sk_dir);
+    g_free (sk_file);
+
+    return success;
+}
+
+
 static void
 load_config ()
 {
-    gchar *api_key, *img_size = NULL;
+    gchar *api_str, *img_size = NULL;
     GKeyFile *kf;
 
     if (profile.config_file == NULL)
@@ -267,11 +317,17 @@ load_config ()
     {
         DBG("CONFIG: loaded config file");
 
-        api_key = g_key_file_get_string (kf, "Settings", "ApiKey", NULL);
-        if (api_key != NULL)
+        api_str = g_key_file_get_string (kf, "Settings", "ApiKey", NULL);
+        if (api_str != NULL)
         {
-            profile.api_key = g_strdup (g_strstrip (api_key));
-            g_free (api_key);
+            profile.api_key = g_strdup (g_strstrip (api_str));
+            g_free (api_str);
+        }
+        api_str = g_key_file_get_string (kf, "Settings", "ApiSecret", NULL);
+        if (api_str != NULL)
+        {
+            profile.api_secret = g_strdup (g_strstrip (api_str));
+            g_free (api_str);
         }
 
         /* if time format wasn't on command line, read from config */
@@ -305,9 +361,13 @@ load_config ()
 
     g_key_file_free (kf);
 
-    if (profile.api_key == NULL)
+    if (profile.api_key == NULL || profile.api_secret == NULL)
     {
-        profile.api_key = g_strdup ("3bd2ead9afcba9077c7cb7a6927260e0");
+        g_free (profile.api_key);
+        g_free (profile.api_secret);
+
+        profile.api_key =    g_strdup ("3bd2ead9afcba9077c7cb7a6927260e0");
+        profile.api_secret = g_strdup ("856b0f4f1f825e9101e74027edc333d6");
 
         DBG("CONFIG: didn't get ApiKey from config, using default");
     }
@@ -333,6 +393,11 @@ remove_extra_options ()
     {
         switch (*p)
         {
+            case 'K':
+                g_free (profile.token);
+                profile.token = NULL;
+                break;
+
             case 'U':
                 g_free (profile.user);
                 profile.user = NULL;
@@ -366,12 +431,12 @@ remove_extra_options ()
                 profile.tagtype = -1;
                 break;
 
-            case 'S':
-                profile.starts = -1;
+            case '1':
+                profile.time1 = -1;
                 break;
 
-            case 'E':
-                profile.ends = -1;
+            case '2':
+                profile.time2 = -1;
                 break;
 
             case 'N':
@@ -406,10 +471,24 @@ check_mandatory_options ()
     {
         switch (*p)
         {
+            case '*':
+                /* method requires signing */
+                profile.sign_rq = TRUE;
+
+                break;
+
+            case 'K':
+                if (profile.token == NULL)
+                {
+                    ERR("OPTS: need 'token' for this method");
+                    retval = FALSE;
+                }
+                break;
+
             case 'U':
                 if (profile.user == NULL)
                 {
-                    ERR("OPTS: need user for this method");
+                    ERR("OPTS: need 'user' for this method");
                     retval = FALSE;
                 }
                 break;
@@ -417,7 +496,7 @@ check_mandatory_options ()
             case 'A':
                 if (profile.artist == NULL)
                 {
-                    ERR("OPTS: need artist for this method");
+                    ERR("OPTS: need 'artist' for this method");
                     retval = FALSE;
                 }
                 break;
@@ -425,7 +504,7 @@ check_mandatory_options ()
             case 'B':
                 if (profile.album == NULL)
                 {
-                    ERR("OPTS: need album for this method");
+                    ERR("OPTS: need 'album' for this method");
                     retval = FALSE;
                 }
                 break;
@@ -433,7 +512,7 @@ check_mandatory_options ()
             case 'T':
                 if (profile.track == NULL)
                 {
-                    ERR("OPTS: need track for this method");
+                    ERR("OPTS: need 'track' for this method");
                     retval = FALSE;
                 }
                 break;
@@ -441,7 +520,7 @@ check_mandatory_options ()
             case 'G':
                 if (profile.tag == NULL)
                 {
-                    ERR("OPTS: need tag for this method");
+                    ERR("OPTS: need 'tag' for this method");
                     retval = FALSE;
                 }
                 break;
@@ -449,7 +528,7 @@ check_mandatory_options ()
             case 'C':
                 if (profile.country == NULL)
                 {
-                    ERR("OPTS: need country for this method");
+                    ERR("OPTS: need 'country' for this method");
                     retval = FALSE;
                 }
                 break;
@@ -457,7 +536,27 @@ check_mandatory_options ()
             case 'Y':
                 if (profile.tagtype < 0)
                 {
-                    ERR("OPTS: need tagtype for this method");
+                    ERR("OPTS: need 'tagtype' for this method");
+                    retval = FALSE;
+                }
+                break;
+
+            case '1':
+                if (profile.time1 < 0)
+                {
+                    ERR("OPTS: need '%s' for this method",
+                        (strcmp (methods[profile.method][METH_STR_TIME1], "timestamp") == 0
+                        ? "timestamp" : "starts"));
+                    retval = FALSE;
+                }
+                break;
+
+            case '2':
+                if (profile.time2 < 0)
+                {
+                    ERR("OPTS: need '%s' for this method",
+                        (strcmp (methods[profile.method][METH_STR_TIME1], "duration") == 0
+                        ? "duration" : "ends"));
                     retval = FALSE;
                 }
                 break;
@@ -477,12 +576,14 @@ load_options (int *argc, char ***argv)
     gchar *img_size = NULL, *page_str = NULL, *lang = NULL, *autocorrect = NULL;
     gboolean retval, mlist = FALSE, plist = FALSE, ilist = FALSE, llist = FALSE;
     gint i;
-    gint starts = -1, ends = -1, limit = -1;
+    gint starts = -1, ends = -1, limit = -1, timestamp = -1, duration = -1;
     GError *error = NULL;
     GOptionContext *context;
     GOptionEntry entries[] = {
         { "method",   'm',    0, G_OPTION_ARG_STRING, &method,
             "use API method M", "M" },
+        { "signed",   's',    0, G_OPTION_ARG_NONE, &profile.sign_rq,
+            "force signed request", NULL },
         { "user",     'u',    0, G_OPTION_ARG_STRING, &profile.user,
             "for LastFM username U", "U" },
         { "artist",   'a',    0, G_OPTION_ARG_STRING, &profile.artist,
@@ -501,6 +602,12 @@ load_options (int *argc, char ***argv)
             "for language code LL", "LL" },
         { "autocorrect",'A',  0, G_OPTION_ARG_STRING, &autocorrect,
             "set autocorrect to state V [0|1]", "V" },
+        { "token",    'k',    0, G_OPTION_ARG_STRING, &profile.token,
+            "token K from auth.gettoken", "K" },
+        { "timestamp",    0,     0, G_OPTION_ARG_INT, &timestamp,
+            "at unix timestamp T", "T" },
+        { "duration",    0,     0, G_OPTION_ARG_INT, &duration,
+            "with duration D seconds", "D" },
         { "limit",    'l',    0, G_OPTION_ARG_INT, &limit,
             "fetch L items per page", "L" },
         { "page-num", 'n',    0, G_OPTION_ARG_STRING, &page_str,
@@ -508,9 +615,9 @@ load_options (int *argc, char ***argv)
         { "period",   'p',    0, G_OPTION_ARG_STRING, &period,
             "fetch data for period P", "P" },
         { "starts",    0,     0, G_OPTION_ARG_INT, &starts,
-            "fetch data from start S", "S" },
-        { "ends",      0,     0, G_OPTION_ARG_INT, &ends,
-            "fetch data till end E", "E" },
+            "from start time S", "S" },
+        { "ends",    0,     0, G_OPTION_ARG_INT, &ends,
+            "till end time E", "E" },
         { "outfile",  'o',    0, G_OPTION_ARG_FILENAME, &profile.xml_file,
             "output returned xml to file F", "F" },
         { "infile",   'i',    0, G_OPTION_ARG_FILENAME, &input_file,
@@ -753,12 +860,31 @@ load_options (int *argc, char ***argv)
             }
         }
 
-        if (starts > 0) profile.starts = starts;
-        if (ends > 0) profile.ends = ends;
-        if (limit > 0) profile.limit = limit;
-
         /* skip method-related options if method was invalid */
         if (profile.method < 0) goto exit_opts;
+
+        if (starts > 0 && methods[profile.method][METH_STR_TIME1] != NULL &&
+            strcmp (methods[profile.method][METH_STR_TIME1], "timestamp") != 0)
+        {
+            profile.time1 = starts;
+        }
+        if (ends > 0 && methods[profile.method][METH_STR_TIME2] != NULL &&
+            strcmp (methods[profile.method][METH_STR_TIME2], "duration") != 0)
+        {
+            profile.time2 = ends;
+        }
+        if (timestamp > 0 && methods[profile.method][METH_STR_TIME1] != NULL &&
+            strcmp (methods[profile.method][METH_STR_TIME1], "timestamp") == 0)
+        {
+            profile.time1 = timestamp;
+        }
+        if (duration > 0 && methods[profile.method][METH_STR_TIME2] != NULL &&
+            strcmp (methods[profile.method][METH_STR_TIME2], "duration") == 0)
+        {
+            profile.time2 = duration;
+        }
+
+        if (limit > 0) profile.limit = limit;
 
         if (!check_mandatory_options ()) retval = FALSE;
 
@@ -782,55 +908,6 @@ exit_opts:
     g_free (autocorrect);
 
     return retval;
-}
-
-
-static void
-param_append_str (gchar **string, const gchar *param, const gchar *value)
-{
-    gchar *temp, *encoded;
-
-    if (string == NULL || param == NULL || value == NULL) return;
-
-    DBG("RQ: add str '%s=%s'", param, value);
-
-    /* NB option parser converts CL strings to utf8, so
-     * no conversion is needed here */
-    encoded = g_uri_escape_string (value, NULL, FALSE);
-
-    temp = g_strdup_printf ("%s%s%s%c%s",
-                            (*string == NULL ? "" : *string),
-                            (*string == NULL ? "" : "&"),
-                            param, '=', encoded);
-
-    g_free (encoded);
-
-    g_free (*string);
-
-    *string = temp;
-}
-
-
-static void
-param_append_int (gchar **string, const gchar *param, gint value)
-{
-    gchar *temp;
-
-    if (string == NULL || param == NULL || value < 0) return;
-
-    DBG("RQ: add int '%s=%d'", param, value);
-
-    /* NB option parser converts CL strings to utf8, so
-     * no conversion is needed here */
-
-    temp = g_strdup_printf ("%s%s%s%c%d",
-                            (*string == NULL ? "" : *string),
-                            (*string == NULL ? "" : "&"),
-                            param, '=', value);
-
-    g_free (*string);
-
-    *string = temp;
 }
 
 
@@ -876,6 +953,243 @@ load_xml_from_file ()
 }
 
 
+/* adds strings pname & value to arrays */
+static void
+param_add_str (GPtrArray *params, GPtrArray *values,
+               const gchar *pname, const gchar *value)
+{
+    DBG("URL+? add str %s=%s", pname, value);
+    if (params == NULL || values == NULL || pname == NULL || value == NULL) return;
+
+    g_ptr_array_add (params, (gpointer) pname);
+    g_ptr_array_add (values, (gpointer) value);
+}
+
+
+/* converts int to string & adds pname & number string to arrays
+ * returns number string to be freed when no longer needed */
+static gchar *
+param_add_int (GPtrArray *params, GPtrArray *values, const gchar *pname, gint value)
+{
+    gchar *str;
+
+    DBG("URL+? add int %s=%d", pname, value);
+    if (params == NULL || values == NULL || pname == NULL || value < 0) return NULL;
+
+    str = g_strdup_printf ("%d", value);
+
+    g_ptr_array_add (params, (gpointer) pname);
+    g_ptr_array_add (values, (gpointer) str);
+
+    return str;
+}
+
+
+static void
+param_sort (GPtrArray *params, GPtrArray *values)
+{
+    gint i, j, d, n;
+    gboolean f;
+
+    if (params == NULL || values == NULL || params->len < 2) return;
+
+    n = params->len;
+    d = n;
+    while (d > 1)
+    {
+        d /= 2;
+        do
+        {
+            f = FALSE;
+            for (i = 0, j = d; j < n; i++, j++)
+            {
+                if (strcmp ((char*)params->pdata[i], (char*)params->pdata[j]) > 0)
+                {
+                    gpointer t;
+
+                    t = params->pdata[i];
+                    params->pdata[i] = params->pdata[j];
+                    params->pdata[j] = t;
+
+                    t = values->pdata[i];
+                    values->pdata[i] = values->pdata[j];
+                    values->pdata[j] = t;
+
+                    f = TRUE;
+                }
+            }
+        } while (f);
+    }
+}
+
+
+static void
+sign_request (GPtrArray *params, GPtrArray *values)
+{
+    gint i;
+    gchar *signature = NULL, *temp, *md5;
+
+    param_sort (params, values);
+
+    for (i = 0; i < params->len; i++)
+    {
+        if (i == 0)
+        {
+            signature = g_strconcat (params->pdata[0], values->pdata[0], NULL);
+        }
+        else
+        {
+            temp = g_strconcat (signature, params->pdata[i], values->pdata[i], NULL);
+            g_free (signature);
+            signature = temp;
+        }
+    }
+
+    temp  = g_strconcat (signature, profile.api_secret, NULL);
+    g_free (signature);
+    signature = temp;
+
+    md5 = g_compute_checksum_for_string (G_CHECKSUM_MD5, signature, -1);
+    param_add_str (params, values, "api_sig", md5);
+    g_free (signature);
+}
+
+
+/* return session key, or NULL on fail */
+static gchar *
+get_session_key ()
+{
+    gchar *sk_path, *sk_str;
+    GError *error = NULL;
+
+    if (profile.user == NULL) return NULL;
+
+    sk_path = g_build_filename (g_get_user_data_dir (), "vlast", "sk",
+                                profile.api_key, profile.user, NULL);
+    DBG("sk path: %s", sk_path);
+
+    if (!g_file_get_contents (sk_path, &sk_str, NULL, &error))
+    {
+        DBG("%s", error->message);
+
+        g_error_free (error);
+
+        sk_str = NULL;
+    }
+
+    g_free (sk_path);
+
+    return sk_str;
+}
+
+
+static gchar *
+build_url ()
+{
+    gint i;
+    gchar *url, *sk = NULL;
+    gchar *limit = NULL, *page = NULL, *time1 = NULL, *time2 = NULL;
+    GPtrArray *paras, *values;
+
+    if (profile.sign_rq && profile.user != NULL)
+    {
+        sk = get_session_key ();
+        if (sk == NULL)
+        {
+            ERR("session key not found for user '%s' - reauthenticate?", profile.user);
+
+            return NULL;
+        }
+    }
+
+    paras = g_ptr_array_new ();
+    values = g_ptr_array_new ();
+
+    param_add_str (paras, values, "method", methods[profile.method][METH_STR_API]);
+    param_add_str (paras, values, "api_key", profile.api_key);
+    param_add_str (paras, values, "token", profile.token);
+    param_add_str (paras, values, "sk", sk);
+
+    if (!profile.sign_rq) param_add_str (paras, values, "user", profile.user);
+    param_add_str (paras, values, "artist", profile.artist);
+    param_add_str (paras, values, "album", profile.album);
+    param_add_str (paras, values, "track", profile.track);
+    param_add_str (paras, values, "tag", profile.tag);
+    param_add_str (paras, values, "country", profile.country);
+
+    if (profile.limit > 0)
+    {
+        limit = param_add_int (paras, values, "limit", profile.limit);
+    }
+    if (profile.num_page > 0)
+    {
+        page = param_add_int (paras, values, "page", profile.num_page);
+    }
+    if (profile.time1 > 0)
+    {
+        time1 = param_add_int (paras, values,
+                               methods[profile.method][METH_STR_TIME1],
+                               profile.time1);
+    }
+    if (profile.time2 > 0)
+    {
+        time2 = param_add_int (paras, values,
+                               methods[profile.method][METH_STR_TIME2],
+                               profile.time2);
+    }
+
+    if (profile.period >= 0)
+    {
+        param_add_str (paras, values, "period", periods[profile.period][PER_STR_API]);
+    }
+    if (profile.tagtype >= 0)
+    {
+        param_add_str (paras, values, "taggingtype", tagtypes[profile.tagtype]);
+    }
+    if (profile.lang >= 0)
+    {
+        param_add_str (paras, values, "lang", languages[profile.lang]);
+    }
+    if (profile.autocorrect >= 0)
+    {
+        param_add_str (paras, values, "autocorrect", autocorrects[profile.autocorrect]);
+    }
+
+
+    /* if making signed request, the parameters will need to be sorted
+     * and then signature made before building request url */
+    if (profile.sign_rq)
+    {
+        sign_request (paras, values);
+    }
+
+    /* build request url */
+    url = g_strdup ("http://ws.audioscrobbler.com/2.0/");
+    for (i = 0; i < paras->len; i++)
+    {
+        gchar *temp;
+
+        temp = g_strdup_printf ("%s%c%s=%s", url,
+                                             (i == 0 ? '?' : '&'),
+                                             (gchar*) g_ptr_array_index (paras, i),
+                                             (gchar*) g_ptr_array_index (values, i));
+        g_free (url);
+        url = temp;
+    }
+
+    /* free stuff we no longer need */
+    g_free (sk);
+    g_free (limit);
+    g_free (page);
+    g_free (time1);
+    g_free (time2);
+    g_ptr_array_free (paras, TRUE);
+    g_ptr_array_free (values, TRUE);
+
+    return url;
+}
+
+
 static gboolean
 make_request ()
 {
@@ -885,44 +1199,9 @@ make_request ()
     CURL *curl;
     CURLcode res = CURLE_OK;
 
-    request = g_strconcat ("http://ws.audioscrobbler.com/2.0/"
-                           "?method=", methods[profile.method][METH_STR_API],
-                           "&api_key=", profile.api_key,
-                           NULL);
-
-    /* add other params, NULL/-ve values are ignored in param_append_*() */
-    param_append_str (&request, "user", profile.user);
-    param_append_str (&request, "artist", profile.artist);
-    param_append_str (&request, "album", profile.album);
-    param_append_str (&request, "track", profile.track);
-    param_append_str (&request, "tag", profile.tag);
-    param_append_str (&request, "country", profile.country);
-    param_append_int (&request, "limit", profile.limit);
-    param_append_int (&request, "page", profile.num_page);
-    param_append_int (&request, methods[profile.method][METH_STR_START], profile.starts);
-    param_append_int (&request, methods[profile.method][METH_STR_END], profile.ends);
-
-    if (profile.period >=0)
-    {
-        param_append_str (&request, "period", periods[profile.period][PER_STR_API]);
-    }
-
-    if (profile.tagtype >=0)
-    {
-        param_append_str (&request, "taggingtype", tagtypes[profile.tagtype]);
-    }
-
-    if (profile.lang >=0)
-    {
-        param_append_str (&request, "lang", languages[profile.lang]);
-    }
-
-    if (profile.autocorrect >=0)
-    {
-        param_append_str (&request, "autocorrect", autocorrects[profile.autocorrect]);
-    }
-
+    request = build_url ();
     DBG("RQ: url = %s", request);
+    if (request == NULL) return FALSE;
     //exit(0);
 
     /* reset position in buffer */
@@ -998,10 +1277,12 @@ free_profile ()
 
     g_free (profile.album);
     g_free (profile.api_key);
+    g_free (profile.api_secret);
     g_free (profile.artist);
     g_free (profile.country);
     g_free (profile.time_format);
     g_free (profile.tag);
+    g_free (profile.token);
     g_free (profile.track);
     g_free (profile.user);
     g_free (profile.xml_file);

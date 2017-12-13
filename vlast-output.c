@@ -606,7 +606,10 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
 
     add_leader (results, "track", count);
 
-    add_output_str_from_tag (results, first_node, "name", "track");
+    if (!add_output_str_from_tag (results, first_node, "name", "track"))
+    {
+        add_output_str_from_tag (results, first_node, "track", "track");
+    }
 
     if (!add_output_str_from_tag (results, first_node, "artist", "artist"))
     {
@@ -628,7 +631,10 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
 
     add_output_image_url (results, first_node);
 
-    add_output_date_from_tag (results, first_node, "date", "time");
+    if (!add_output_date_from_tag (results, first_node, "date", "time"))
+    {
+        add_output_date_from_tag (results, first_node, "timestamp", "time");
+    }
 
     add_output_dur_from_tag (results, first_node, "duration",
                              "duration", FALSE);
@@ -656,6 +662,8 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
 
         g_strfreev (tags);
     }
+
+    add_output_str_from_tag (results, first_node, "ignoredMessage", "ignored");
 
     add_output_wiki (results, first_node, "wiki");
 
@@ -1089,124 +1097,218 @@ get_coordinates (xmlNode *node, VlastResults *results)
 
 
 static gboolean
+proc_token (xmlNode *node, VlastResults *results)
+{
+    gchar *token;
+    gchar *url;
+    gchar *instruction;
+
+    add_leader (results, "authenticate (1)", -1);
+
+    token = get_node_contents (node);
+    add_output_string (results, "token", token);
+
+    url = g_strdup_printf ("http://www.last.fm/api/auth/?api_key=%s&token=%s",
+                           profile.api_key, token);
+    add_output_string (results, "url", url);
+
+    instruction = g_strdup_printf (
+                       "run vlast again with same config and --method=auth.getsession"
+                       " --token=%s",
+                       token);
+    add_output_string (results, "action 1",
+                       "visit url above in a browser and accept vlast");
+    add_output_string (results, "action 2", instruction);
+
+    g_free (token);
+    g_free (url);
+    g_free (instruction);
+
+    return TRUE;
+}
+
+
+static gboolean
+proc_session (xmlNode *first_node, VlastResults *results)
+{
+
+    add_leader (results, "authenticate (2)", profile.num_page);
+
+    profile.user = get_child_contents_by_tag (first_node, "name");
+    profile.token = get_child_contents_by_tag (first_node, "key");
+
+    DBG("SESSION: user=%s, sk=%s", profile.user, profile.token);
+
+    add_output_string (results, "auth user", profile.user);
+    add_output_string (results, "session key", profile.token);
+
+    if (profile.user == NULL || profile.token == NULL)
+    {
+        add_output_string (results, "FAIL", "bad response to auth.getsession");
+
+        return FALSE;
+    }
+
+    if (vlast_sk_save ())
+    {
+        add_output_string (results, "success", "session key saved");
+
+        return TRUE;
+    }
+    else
+    {
+        add_output_string (results, "FAIL", "failed to save session key");
+
+        return FALSE;
+    }
+}
+
+
+static gboolean
+proc_scrobbles (xmlNode *first_node, VlastResults *results)
+{
+    xmlNode *node;
+
+    for (node = first_node; node != NULL; node = node->next)
+    {
+        if (node->type == XML_ELEMENT_NODE &&
+            strcmp ((char*)node->name, "scrobble") == 0)
+        {
+            (void) proc_track_info (node->children, results, 0);
+        }
+    }
+
+    add_blank_line (results);
+
+    return TRUE;
+}
+
+
+static gboolean
 proc_method (xmlNode *first_node)
 {
-    gboolean okay = FALSE;
+    gboolean okay = TRUE;
     const gchar *method = NULL;
     xmlNode *node;
     VlastResults *results;
 
+    results = g_new0 (VlastResults, 1);
 
-    if (!profile.from_file) method = methods[profile.method][METH_STR_XML];
+    add_output_string (results, "response", "OK");
+    add_blank_line (results);
 
     for (node = first_node; node != NULL; node = node->next)
     {
         if (node->type != XML_ELEMENT_NODE) continue;
 
-        if (profile.from_file)
+        method = (gchar *) node->name;
+
+        DBG("P_METH: got xml method '%s'", method);
+
+        get_coordinates (node, results);
+
+        if (g_str_has_suffix (method, "tracks") ||
+            g_str_has_suffix (method, "trackchart"))
         {
-            gint i;
+            okay = proc_tracks (node->children, results);
+        }
+        else if (g_str_has_suffix (method, "artists") ||
+                 g_str_has_suffix (method, "artistchart"))
+        {
+            okay = proc_artists (node->children, results);
+        }
+        else if (g_str_has_suffix (method, "albums") ||
+                 g_str_has_suffix (method, "albumchart"))
+        {
+            okay = proc_albums (node->children, results);
+        }
+        else if (strcmp (method, "friends") == 0)
+        {
+            okay = proc_users (node->children, results);
+        }
+        else if (g_str_has_suffix (method, "tags"))
+        {
+            okay = proc_tags (node->children, results);
+        }
+        else if (strcmp (method, "corrections") == 0)
+        {
+            okay = proc_corrections (node->children, results);
+        }
+        else if (g_str_has_suffix (method, "artist"))
+        {
+            okay = proc_artist_info (node->children, results, 0);
+        }
+        else if (g_str_has_suffix (method, "album"))
+        {
+            okay = proc_album_info (node->children, results, 0);
+        }
+        else if (g_str_has_suffix (method, "track"))
+        {
+            okay = proc_track_info (node->children, results, 0);
+        }
+        else if (g_str_has_suffix (method, "tag"))
+        {
+            okay = proc_tag_info (node->children, results, 0);
+        }
+        else if (strcmp (method, "user") == 0)
+        {
+            okay = proc_user_info (node->children, results, 0);
+        }
+        else if (strcmp (method, "weeklychartlist") == 0)
+        {
+            okay = proc_chart_list (node->children, results, 0);
+        }
+        else if (strcmp (method, "taggings") == 0)
+        {
+            okay = proc_taggings (node->children, results);
+        }
+        else if (strcmp (method, "results") == 0)
+        {
+            okay = proc_search_results (node->children, results);
+        }
+        else if (strcmp (method, "token") == 0)
+        {
+            okay = proc_token (node, results);
+        }
+        else if (strcmp (method, "session") == 0)
+        {
+            okay = proc_session (node->children, results);
+        }
+        else if (strcmp (method, "nowplaying") == 0)
+        {
+            okay = proc_track_info (node->children, results, 0);
+        }
+        else if (strcmp (method, "scrobbles") == 0)
+        {
+            okay = proc_scrobbles (node->children, results);
+        }
+        else
+        {
+            ERR("P_METH: xml method tag <%s> not recognised", method);
 
-            for (i = 0; methods[i][METH_STR_API] != NULL; i++)
-            {
-                if (g_ascii_strcasecmp ((gchar*) node->name,
-                                        methods[i][METH_STR_XML]) == 0)
-                {
-                    profile.method = i;
-
-                    break;
-                }
-            }
-
-            if (profile.method < 0) continue;
-
-            method = methods[profile.method][METH_STR_XML];
+            okay = FALSE;
         }
 
-        if (profile.from_file || strcmp ((char*) node->name, method) == 0)
+        if (results->output != NULL)
         {
-            DBG("P_METH: got xml method '%s'", method);
+            fputs (results->output, stdout);
 
-            results = g_new0 (VlastResults, 1);
+            g_free (results->output);
 
-            get_coordinates (node, results);
-
-            if (g_str_has_suffix (method, "tracks") ||
-                g_str_has_suffix (method, "trackchart"))
-            {
-                okay = proc_tracks (node->children, results);
-            }
-            else if (g_str_has_suffix (method, "artists") ||
-                     g_str_has_suffix (method, "artistchart"))
-            {
-                okay = proc_artists (node->children, results);
-            }
-            else if (g_str_has_suffix (method, "albums") ||
-                     g_str_has_suffix (method, "albumchart"))
-            {
-                okay = proc_albums (node->children, results);
-            }
-            else if (strcmp (method, "friends") == 0)
-            {
-                okay = proc_users (node->children, results);
-            }
-            else if (g_str_has_suffix (method, "tags"))
-            {
-                okay = proc_tags (node->children, results);
-            }
-            else if (strcmp (method, "corrections") == 0)
-            {
-                okay = proc_corrections (node->children, results);
-            }
-            else if (g_str_has_suffix (method, "artist"))
-            {
-                okay = proc_artist_info (node->children, results, 0);
-            }
-            else if (g_str_has_suffix (method, "album"))
-            {
-                okay = proc_album_info (node->children, results, 0);
-            }
-            else if (g_str_has_suffix (method, "track"))
-            {
-                okay = proc_track_info (node->children, results, 0);
-            }
-            else if (g_str_has_suffix (method, "tag"))
-            {
-                okay = proc_tag_info (node->children, results, 0);
-            }
-            else if (strcmp (method, "user") == 0)
-            {
-                okay = proc_user_info (node->children, results, 0);
-            }
-            else if (strcmp (method, "weeklychartlist") == 0)
-            {
-                okay = proc_chart_list (node->children, results, 0);
-            }
-            else if (strcmp (method, "taggings") == 0)
-            {
-                okay = proc_taggings (node->children, results);
-            }
-            else if (strcmp (method, "results") == 0)
-            {
-                okay = proc_search_results (node->children, results);
-            }
-            else
-            {
-                ERR("P_METH: xml method tag <%s> not recognised", method);
-            }
-
-            if (results->output != NULL)
-            {
-                fputs (results->output, stdout);
-
-                g_free (results->output);
-            }
-
-            g_free (results);
-
-            break;
+            results->output = NULL;
         }
+
+        break;
     }
+
+    if (results->output != NULL)
+    {
+        fputs (results->output, stdout);
+
+        g_free (results->output);
+    }
+
+    g_free (results);
 
     return okay;
 }

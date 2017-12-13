@@ -33,9 +33,11 @@ Configuration File
 ------------------
 
 This is a key-value file similar to .desktop files for per-user settings.
-Vlast looks in group [Settings] for keys ApiKey, TimeFormat & ImageSize
+Vlast looks in group [Settings] for keys ApiKey, ApiSecret, TimeFormat &
+ImageSize
 
-    ApiKey is where you declare your own API key. (defaults to internal key)
+    ApiKey and ApiSecret are where you declare your own API key & API secret.
+        (if either is missing defaults to internal key)
 
     TimeFormat is a strftime format string, to customise the way date/time
         is printed. (overriden by --time-format/-T; defaults to "%F %T")
@@ -79,6 +81,7 @@ General:
 
 Define your request:
     -m, --method=M          use API method M
+    -s, --signed            force signed request
     -u, --user=U            for LastFM username U
     -a, --artist=A          for artist A
     -b, --album=B           for album B
@@ -88,6 +91,9 @@ Define your request:
     -c, --country=C         for ISO 3166-1 country name C (geo charts)
     -L, --lang=LL           for ISO 639 alpha-2 language code LL
     -A, --autocorrect=V     set autocorrect to state V [0|1]
+    -k, --token=K           token string K from auth.gettoken
+    --timestamp=T           at unix timestamp T
+    --duration=D            with duration D seconds
 
 Specify bounds on data:
     -l, --limit=L           fetch L items per page
@@ -107,8 +113,8 @@ XML files:
     -i, --infile=F          don't fetch data, process xml file F
 
 Notes:
-* values L & N are positive integers
-* values S & E are unix timestamps (seconds since Epoch)
+* values L, N & D are positive integers
+* values S, E & T are unix timestamps (seconds since Epoch)
 * short names of method M & period P can be used, see --list-*
 * option names are not always the same as API parameter names, but it should
     be obvious to which parameter they refer
@@ -160,12 +166,37 @@ Get info on a specific track, include mega size image url:
     $ vlast -m t.gi -a Cher -t Believe --image-size=mega
 
 
+Authentication
+-------------
+In order to use signed/write methods, you need to authenticate your user
+account with the API key which you are using. The procedure is as follows:
+
+1)  $ vlast --method=auth.gettoken
+This will print a url that you should copy into & visit in a web browser,
+and there accept the application.
+
+2)  $ vlast --method=auth.getsession --token=<token>
+replacing <token> by the token printed in the output above. On success, this
+will print the username that has been authenticated and save the session key.
+
+3) Check everything is okay by making a signed request, e.g.:
+    $ vlast --method=user.getinfo --user=<username> --signed
+
+The application should now appear in the list in your settings at
+https://www.last.fm/settings/applications
+
+The session key is stored at XDG_DATA_HOME/vlast/sk/<api_key>/<username>
+(usually ~/.local/share/vlast/sk/<api_key>/<username>).
+
+
 API Key
 -------
 
 While vlast has its own API key, it is recommended that users obtain & use
 their own key. Obtain your own key by creating an API account at:
     https://www.last.fm/api/account/create
+Copy the API key and secret strings into a configuration file as detailed
+earlier.
 
 When fetching a range of pages, vlast uses a crude rate-limiter to stay within
 last.fm's rules. Otherwise, if you are making multiple requests, it's your
@@ -175,7 +206,7 @@ duty to stay within bounds, or banning by last.fm may result.
 Limitations
 -----------
 
-* not all API methods are supported, notably write methods
+* not all API methods are supported
 * not all request parameters are supported
 * not all returned data is used in generating output (but saving xml with
     the --outfile option allows data to be used by other tools)
@@ -189,4 +220,5 @@ Lots, I'm sure.
 
 TODO
 ----
-
+* support albumArtist parameter
+* support methods for adding/removing tags
