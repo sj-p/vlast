@@ -1168,12 +1168,17 @@ build_url ()
     for (i = 0; i < paras->len; i++)
     {
         gchar *temp;
+        gchar *escaped;
+
+        escaped = g_uri_escape_string ((gchar*) g_ptr_array_index (values, i),
+                                       NULL, FALSE);
 
         temp = g_strdup_printf ("%s%c%s=%s", url,
                                              (i == 0 ? '?' : '&'),
                                              (gchar*) g_ptr_array_index (paras, i),
-                                             (gchar*) g_ptr_array_index (values, i));
+                                             escaped);
         g_free (url);
+        g_free (escaped);
         url = temp;
     }
 
