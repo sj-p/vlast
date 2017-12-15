@@ -86,7 +86,7 @@ Define your request:
     -a, --artist=A          for artist A
     -b, --album=B           for album B
     -t, --track=T           for track T
-    -g, --tag=G             for tag G
+    -g, --tag=G             for tag G (taglist for methods *.addtags)
     -y, --tagtype=Y         for tagging type Y artist|album|track
     -c, --country=C         for ISO 3166-1 country name C (geo charts)
     -L, --lang=LL           for ISO 639 alpha-2 language code LL
@@ -116,6 +116,8 @@ Notes:
 * values L, N & D are positive integers
 * values S, E & T are unix timestamps (seconds since Epoch)
 * short names of method M & period P can be used, see --list-*
+* value G is a comma-separated list of up to 10 tags for methods *.addtags
+    otherwise it's a single tag
 * option names are not always the same as API parameter names, but it should
     be obvious to which parameter they refer
 * by default, image urls are not printed; if enabled in config or on command
@@ -206,7 +208,6 @@ duty to stay within bounds, or banning by last.fm may result.
 Limitations
 -----------
 
-* not all API methods are supported
 * not all request parameters are supported
 * not all returned data is used in generating output (but saving xml with
     the --outfile option allows data to be used by other tools)
@@ -221,4 +222,3 @@ Lots, I'm sure.
 TODO
 ----
 * support albumArtist parameter
-* support methods for adding/removing tags

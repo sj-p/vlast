@@ -61,6 +61,7 @@ enum
     METH_STR_FORB,
     METH_STR_TIME1,
     METH_STR_TIME2,
+    METH_STR_TAG,
     NUM_METH_STR
 };
 

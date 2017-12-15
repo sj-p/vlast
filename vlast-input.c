@@ -29,61 +29,67 @@ const gchar *autocorrects[] = {"0", "1", NULL};
 
 /* supported methods:
  *      api name, short api name, mandatory params, ignored params,
- *          'time1' param name, 'time2' param name */
+ *          'time1' param name, 'time2' param name, tag/tags */
 const gchar *methods[][NUM_METH_STR] =
 {
-    {"auth.gettoken",            "au.gt","*",    "KUABTGPNLVY",NULL,NULL},
-    {"auth.getsession",          "au.gs","*K",   "UABTGPNLVY", NULL,NULL},
-    {"user.getinfo",             "u.gi", "U",    "KABTGPNLV",  NULL,NULL},
-    {"user.getrecenttracks",     "u.grt","U",    "KABTGPLV",   "from","to"},
-    {"user.gettopartists",       "u.gta","U",    "KABTGLV",    NULL,NULL},
-    {"user.gettopalbums",        "u.gtb","U",    "KABTGLV",    NULL,NULL},
-    {"user.gettoptracks",        "u.gtt","U",    "KABTGLV",    NULL,NULL},
-    {"user.gettoptags",          "u.gtg","U",    "KABTGPLV",   NULL,NULL},
-    {"user.getlovedtracks",      "u.glt","U",    "KABTGPLV",   NULL,NULL},
-    {"user.getfriends",          "u.gf", "U",    "KABTGPLV",   NULL,NULL},
-    {"user.getweeklyartistchart","u.gac","U",    "KABTGPLV",   "from","to"},
-    {"user.getweeklyalbumchart", "u.gbc","U",    "KABTGPLV",   "from","to"},
-    {"user.getweeklytrackchart", "u.gtc","U",    "KABTGPLV",   "from","to"},
-    {"user.getweeklychartlist",  "u.gcl","U",    "KABTGPLV",   NULL,NULL},
-    {"user.getartisttracks",     "u.gat","UA",   "KBTGL",      "starttimestamp","endtimestamp"},
-    {"user.getpersonaltags",     "u.gpg","UGY",  "KABTPLV",    NULL,NULL},
-    {"library.getartists",       "l.ga", "U",    "KABTGPL",    NULL,NULL},
-    {"artist.getinfo",           "a.gi", "A",    "KBTGPN",     NULL,NULL},
-    {"artist.getcorrection",     "a.gc", "A",    "KUBTGPNLV",  NULL,NULL},
-    {"artist.gettags",           "a.gg", "AU",   "KBTGPL",     NULL,NULL},
-    {"artist.getsimilar",        "a.gs", "A",    "KUBTGPL",    NULL,NULL},
-    {"artist.gettopalbums",      "a.gtb","A",    "KUBTGPL",    NULL,NULL},
-    {"artist.gettoptracks",      "a.gtt","A",    "KUBTGPL",    NULL,NULL},
-    {"artist.gettoptags",        "a.gtg","A",    "KUBTGPL",    NULL,NULL},
-    {"artist.search",            "a.s",  "A",    "KUBTGPLV",   NULL,NULL},
-    {"album.getinfo",            "b.gi", "BA",   "KTGPN",      NULL,NULL},
-    {"album.gettags",            "b.gg", "ABU",  "KTGPL",      NULL,NULL},
-    {"album.gettoptags",         "b.gtg","AB",   "KUTGPL",     NULL,NULL},
-    {"album.search",             "b.s",  "B",    "KUTGPLV",    NULL,NULL},
-    {"track.getinfo",            "t.gi", "TA",   "KBGPN",      NULL,NULL},
-    {"track.getcorrection",      "t.gc", "TA",   "KUBGPNLV",   NULL,NULL},
-    {"track.gettags",            "t.gg", "ATU",  "KBGPL",      NULL,NULL},
-    {"track.getsimilar",         "t.gs", "TA",   "KUBGPL",     NULL,NULL},
-    {"track.gettoptags",         "t.gtg","TA",   "KUBGPL",     NULL,NULL},
-    {"track.search",             "t.s",  "T",    "KUBGPLV",    NULL,NULL},
-    {"track.scrobble",           "t.scr","*UAT1","KGPLVY",     "timestamp","duration"},
-    {"track.updatenowplaying",   "t.unp","*UAT", "KGPLVY",     NULL,"duration"},
-    {"track.love",               "t.l",  "*UAT", "KBGPLVY",    NULL,NULL},
-    {"track.unlove",             "t.u",  "*UAT", "KBGPLVY",    NULL,NULL},
-    {"chart.gettopartists",      "c.ga", "",     "KUABGTPLV",  NULL,NULL},
-    {"chart.gettoptracks",       "c.gt", "",     "KUABGTPLV",  NULL,NULL},
-    {"chart.gettoptags",         "c.gg", "",     "KUABGTPLV",  NULL,NULL},
-    {"geo.gettopartists",        "geo.a","C",    "KUABGTPLV",  NULL,NULL},
-    {"geo.gettoptracks",         "geo.t","C",    "KUABGTPLV",  NULL,NULL},
-    {"tag.getinfo",              "g.gi", "G",    "KUABTPNV",   NULL,NULL},
-    {"tag.getsimilar",           "g.gs", "G",    "KUABTPLV",   NULL,NULL},
-    {"tag.gettopartists",        "g.gta","G",    "KUABTPLV",   NULL,NULL},
-    {"tag.gettopalbums",         "g.gtb","G",    "KUABTPLV",   NULL,NULL},
-    {"tag.gettoptracks",         "g.gtt","G",    "KUABTPLV",   NULL,NULL},
-    {"tag.gettoptags",           "g.gtg","",     "KUABGTPLV",  NULL,NULL},
-    {"tag.getweeklychartlist",   "g.gcl","G",    "KUABTPLV",   NULL,NULL},
-    {NULL,                       NULL,   NULL,   NULL,         NULL,NULL}
+    {"auth.gettoken",            "au.gt","*",    "KUABTPNLVY",NULL,NULL,NULL},
+    {"auth.getsession",          "au.gs","*K",   "UABTPNLVY", NULL,NULL,NULL},
+    {"user.getinfo",             "u.gi", "U",    "KABTPNLV",  NULL,NULL,NULL},
+    {"user.getrecenttracks",     "u.grt","U",    "KABTPLV",   "from","to",NULL},
+    {"user.gettopartists",       "u.gta","U",    "KABTLV",    NULL,NULL,NULL},
+    {"user.gettopalbums",        "u.gtb","U",    "KABTLV",    NULL,NULL,NULL},
+    {"user.gettoptracks",        "u.gtt","U",    "KABTLV",    NULL,NULL,NULL},
+    {"user.gettoptags",          "u.gtg","U",    "KABTPLV",   NULL,NULL,NULL},
+    {"user.getlovedtracks",      "u.glt","U",    "KABTPLV",   NULL,NULL,NULL},
+    {"user.getfriends",          "u.gf", "U",    "KABTPLV",   NULL,NULL,NULL},
+    {"user.getweeklyartistchart","u.gac","U",    "KABTPLV",   "from","to",NULL},
+    {"user.getweeklyalbumchart", "u.gbc","U",    "KABTPLV",   "from","to",NULL},
+    {"user.getweeklytrackchart", "u.gtc","U",    "KABTPLV",   "from","to",NULL},
+    {"user.getweeklychartlist",  "u.gcl","U",    "KABTPLV",   NULL,NULL,NULL},
+    {"user.getartisttracks",     "u.gat","UA",   "KBTL",      "starttimestamp","endtimestamp",NULL},
+    {"user.getpersonaltags",     "u.gpg","UGY",  "KABTPLV",   NULL,NULL,"tag"},
+    {"library.getartists",       "l.ga", "U",    "KABTPL",    NULL,NULL,NULL},
+    {"artist.getinfo",           "a.gi", "A",    "KBTPN",     NULL,NULL,NULL},
+    {"artist.getcorrection",     "a.gc", "A",    "KUBTPNLV",  NULL,NULL,NULL},
+    {"artist.gettags",           "a.gg", "AU",   "KBTPL",     NULL,NULL,NULL},
+    {"artist.addtags",           "a.ag", "*UAG", "KBTPL",     NULL,NULL,"tags"},
+    {"artist.removetag",         "a.rg", "*UAG", "KBTPL",     NULL,NULL,"tag"},
+    {"artist.getsimilar",        "a.gs", "A",    "KUBTPL",    NULL,NULL,NULL},
+    {"artist.gettopalbums",      "a.gtb","A",    "KUBTPL",    NULL,NULL,NULL},
+    {"artist.gettoptracks",      "a.gtt","A",    "KUBTPL",    NULL,NULL,NULL},
+    {"artist.gettoptags",        "a.gtg","A",    "KUBTPL",    NULL,NULL,NULL},
+    {"artist.search",            "a.s",  "A",    "KUBTPLV",   NULL,NULL,NULL},
+    {"album.getinfo",            "b.gi", "BA",   "KTPN",      NULL,NULL,NULL},
+    {"album.gettags",            "b.gg", "ABU",  "KTPL",      NULL,NULL,NULL},
+    {"album.addtags",            "b.ag", "*UABG","KTPL",      NULL,NULL,"tags"},
+    {"album.removetag",          "b.rg", "*UABG","KTPL",      NULL,NULL,"tag"},
+    {"album.gettoptags",         "b.gtg","AB",   "KUTPL",     NULL,NULL,NULL},
+    {"album.search",             "b.s",  "B",    "KUTPLV",    NULL,NULL,NULL},
+    {"track.getinfo",            "t.gi", "TA",   "KBPN",      NULL,NULL,NULL},
+    {"track.getcorrection",      "t.gc", "TA",   "KUBPNLV",   NULL,NULL,NULL},
+    {"track.gettags",            "t.gg", "ATU",  "KBPL",      NULL,NULL,NULL},
+    {"track.addtags",            "t.ag", "*UATG","KBPL",      NULL,NULL,"tags"},
+    {"track.removetag",          "t.rg", "*UATG","KBPL",      NULL,NULL,"tag"},
+    {"track.getsimilar",         "t.gs", "TA",   "KUBPL",     NULL,NULL,NULL},
+    {"track.gettoptags",         "t.gtg","TA",   "KUBPL",     NULL,NULL,NULL},
+    {"track.search",             "t.s",  "T",    "KUBPLV",    NULL,NULL,NULL},
+    {"track.scrobble",           "t.scr","*UAT1","KPLVY",     "timestamp","duration",NULL},
+    {"track.updatenowplaying",   "t.unp","*UAT", "KPLVY",     NULL,"duration",NULL},
+    {"track.love",               "t.l",  "*UAT", "KBPLVY",    NULL,NULL,NULL},
+    {"track.unlove",             "t.u",  "*UAT", "KBPLVY",    NULL,NULL,NULL},
+    {"chart.gettopartists",      "c.ga", "",     "KUABTPLV",  NULL,NULL,NULL},
+    {"chart.gettoptracks",       "c.gt", "",     "KUABTPLV",  NULL,NULL,NULL},
+    {"chart.gettoptags",         "c.gg", "",     "KUABTPLV",  NULL,NULL,NULL},
+    {"geo.gettopartists",        "geo.a","C",    "KUABTPLV",  NULL,NULL,NULL},
+    {"geo.gettoptracks",         "geo.t","C",    "KUABTPLV",  NULL,NULL,NULL},
+    {"tag.getinfo",              "g.gi", "G",    "KUABTPNV",  NULL,NULL,"tag"},
+    {"tag.getsimilar",           "g.gs", "G",    "KUABTPLV",  NULL,NULL,"tag"},
+    {"tag.gettopartists",        "g.gta","G",    "KUABTPLV",  NULL,NULL,"tag"},
+    {"tag.gettopalbums",         "g.gtb","G",    "KUABTPLV",  NULL,NULL,"tag"},
+    {"tag.gettoptracks",         "g.gtt","G",    "KUABTPLV",  NULL,NULL,"tag"},
+    {"tag.gettoptags",           "g.gtg","",     "KUABTPLV",  NULL,NULL,NULL},
+    {"tag.getweeklychartlist",   "g.gcl","G",    "KUABTPLV",  NULL,NULL,"tag"},
+    {NULL,                       NULL,   NULL,   NULL,        NULL,NULL,NULL}
 };
 
 
@@ -199,6 +205,27 @@ get_page_range (const gchar *page_str)
     {
         return TRUE;
     }
+}
+
+
+/* check taglist has 10 or fewer members
+ * return TRUE on error */
+static gboolean
+check_taglist ()
+{
+    gint i;
+    gchar *p;
+
+    if (profile.tag == NULL ||
+        methods[profile.method][METH_STR_TAG] == NULL ||
+        strcmp (methods[profile.method][METH_STR_TAG], "tags") != 0) return FALSE;
+
+    for (p = profile.tag, i = 0; *p != '\0'; p++)
+    {
+        if (*p == ',') i++;
+    }
+
+    return  (i > 9);
 }
 
 
@@ -389,6 +416,7 @@ remove_extra_options ()
 
     DBG("OPTS: removing superfluous options %s",
                 methods[profile.method][METH_STR_FORB]);
+
     for (p = methods[profile.method][METH_STR_FORB]; *p != '\0'; p++)
     {
         switch (*p)
@@ -416,11 +444,6 @@ remove_extra_options ()
             case 'B':
                 g_free (profile.album);
                 profile.album = NULL;
-                break;
-
-            case 'G':
-                g_free (profile.tag);
-                profile.tag = NULL;
                 break;
 
             case 'P':
@@ -593,7 +616,7 @@ load_options (int *argc, char ***argv)
         { "track",    't',    0, G_OPTION_ARG_STRING, &profile.track,
             "for track T", "T" },
         { "tag",      'g',    0, G_OPTION_ARG_STRING, &profile.tag,
-            "for tag G", "G" },
+            "for tag G (taglist for methods *.addtags)", "G" },
         { "tagtype",  'y',    0, G_OPTION_ARG_STRING, &tagtype,
             "for tagging type Y [artist|album|track]", "Y" },
         { "country",    'c',    0, G_OPTION_ARG_STRING, &profile.country,
@@ -886,6 +909,13 @@ load_options (int *argc, char ***argv)
 
         if (limit > 0) profile.limit = limit;
 
+        if (check_taglist ())
+        {
+            ERR("too many items in tag list");
+
+            retval = FALSE;
+        }
+
         if (!check_mandatory_options ()) retval = FALSE;
 
         remove_extra_options ();
@@ -1114,7 +1144,7 @@ build_url ()
     param_add_str (paras, values, "artist", profile.artist);
     param_add_str (paras, values, "album", profile.album);
     param_add_str (paras, values, "track", profile.track);
-    param_add_str (paras, values, "tag", profile.tag);
+    param_add_str (paras, values, methods[profile.method][METH_STR_TAG], profile.tag);
     param_add_str (paras, values, "country", profile.country);
 
     if (profile.limit > 0)
