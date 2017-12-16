@@ -618,6 +618,8 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
             add_output_str_from_tag (results, node->children, "name", "artist");
     }
 
+    add_output_str_from_tag (results, first_node, "albumArtist", "album-artist");
+
     if (!add_output_str_from_tag (results, first_node, "album", "album"))
     {
         node = get_child_node_by_tag (first_node, "album");

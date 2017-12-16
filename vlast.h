@@ -32,6 +32,7 @@ typedef struct _VlastData
     gchar      *artist;
     gchar      *album;
     gchar      *track;
+    gchar      *album_artist;
     gchar      *tag;
     gchar      *country;
 } VlastData;

@@ -85,6 +85,7 @@ Define your request:
     -u, --user=U            for LastFM username U
     -a, --artist=A          for artist A
     -b, --album=B           for album B
+    -r, --album-artist=R    for album-artist R
     -t, --track=T           for track T
     -g, --tag=G             for tag G (taglist for methods *.addtags)
     -y, --tagtype=Y         for tagging type Y artist|album|track
@@ -221,4 +222,3 @@ Lots, I'm sure.
 
 TODO
 ----
-* support albumArtist parameter
