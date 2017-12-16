@@ -147,7 +147,7 @@ mem_write (void *buffer, size_t size, size_t nmemb, void *stream)
 
 
 gint
-index_image_size (const gchar *img_size)
+vlast_index_image_size (const gchar *img_size)
 {
     gint i;
 
@@ -370,7 +370,7 @@ load_config ()
 
             if (img_size != NULL && img_size[0] != '\0')
             {
-                if ((profile.img_size = index_image_size (img_size)) < 0)
+                if ((profile.img_size = vlast_index_image_size (img_size)) < 0)
                 {
                     ERR("CONFIG: illegal imagesize %s", img_size);
                 }
@@ -761,7 +761,7 @@ load_options (int *argc, char ***argv)
     /* process img_size */
     if (img_size != NULL)
     {
-        if ((profile.img_size = index_image_size (img_size)) < 0)
+        if ((profile.img_size = vlast_index_image_size (img_size)) < 0)
         {
             ERR("OPTS: illegal imagesize %s", img_size);
         }
@@ -1364,7 +1364,7 @@ main (int argc, char **argv)
 
         if (okay && !profile.quiet)
         {
-            okay = load_xml_doc ();
+            okay = vlast_load_xml_doc ();
         }
 
         /* if page range not set we're done */

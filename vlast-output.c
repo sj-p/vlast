@@ -457,7 +457,7 @@ add_output_image_url (VlastResults *results, xmlNode *first_node)
 
         value = (gchar *) xmlGetProp (node, (xmlChar*) "size");
 
-        index = index_image_size (value);
+        index = vlast_index_image_size (value);
 
         if (index >= 0) nodes[index] = node;
 
@@ -1394,7 +1394,7 @@ exit_dump:
 }
 
 gboolean
-load_xml_doc ()
+vlast_load_xml_doc ()
 {
     gboolean okay = TRUE;
     xmlDoc *doc = NULL;

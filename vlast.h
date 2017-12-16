@@ -79,8 +79,8 @@ enum
 #define DBG(...) if(profile.debug){fprintf(stderr,"vlast: ");fprintf(stderr, __VA_ARGS__);fprintf(stderr,"\n");}
 
 
-gboolean load_xml_doc ();
+gboolean vlast_load_xml_doc ();
 gboolean vlast_sk_save ();
-gint index_image_size (const gchar *img_size);
+gint vlast_index_image_size (const gchar *img_size);
 
 #endif
