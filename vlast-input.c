@@ -275,6 +275,11 @@ check_xml_filename ()
     {
         if (*p == '%')
         {
+            if (p[1] == '%')
+            {   /* literal % sign */
+                p++;
+                continue;
+            }
             if (have_pc) return TRUE;
             have_pc = TRUE;
             DBG("FILECECK: got first '%%'");

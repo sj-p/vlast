@@ -136,8 +136,8 @@ or a range of pages (-n N1-N2).
 When using file in/out with a page range, it is necessary to generate a
 filename for each page, based on the page number. The filename given on
 the command line is used as a printf format string: one decimal specification
-'%d' is required, and the percent character '%' is not allowed elsewhere
-in the string. Zero-padding and precision digits are permitted.
+'%d' is required, zero-padding and precision digits are permitted. You can
+represent a percent sign in the filename with '%%'.
 
 Ranges where lower & upper limit are the same are allowed, resulting in
 fetching/processing a single page. But the filename string must be a valid
