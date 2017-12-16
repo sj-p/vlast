@@ -27,6 +27,28 @@ const gchar *languages[] = {"de", "en", "es", "fr", "it", "ja", "pl", "pt",
 const gchar *autocorrects[] = {"0", "1", NULL};
 
 
+/* codes used here for last.fm API datatypes:
+ *
+ * A Artist
+ * B alBum
+ * C Country
+ * G taG/taGlist
+ * K toKen
+ * L Limit
+ * N Number of page
+ * P Period
+ * R album-aRtist
+ * T Track
+ * U Username
+ * V aVtocorrect
+ * Y tagtYpe
+ *
+ * 1 time1=from/timestamp/starttimestamp
+ * 2 time2=to/duration/endtimestamp
+ * * signed request
+ *
+ * */
+
 /* supported methods:
  *      api name, short api name, mandatory params, ignored params,
  *          'time1' param name, 'time2' param name, tag/tags */
