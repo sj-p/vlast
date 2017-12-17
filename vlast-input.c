@@ -1268,7 +1268,7 @@ build_url ()
 static gboolean
 make_request ()
 {
-    gchar *request, *filename;
+    gchar *request, *filename, *post_data;
     gboolean retval = TRUE;
     GError *error = NULL;
     CURL *curl;
@@ -1276,7 +1276,22 @@ make_request ()
 
     request = build_url ();
     DBG("RQ: url = %s", request);
+
     if (request == NULL) return FALSE;
+
+    /* separate POST data for signed requests */
+    if (profile.sign_rq)
+    {
+        post_data = strchr (request, '?');
+
+        if (post_data == NULL) return FALSE;
+
+        *post_data = '\0';
+
+        post_data++;
+
+        DBG("RQ: post = %s", post_data);
+    }
     //exit(0);
 
     /* reset position in buffer */
@@ -1292,6 +1307,7 @@ make_request ()
     }
 
     curl_easy_setopt (curl, CURLOPT_URL, request);
+    if (profile.sign_rq) curl_easy_setopt (curl, CURLOPT_POSTFIELDS, post_data);
     curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, mem_write);
 
     res = curl_easy_perform (curl);
