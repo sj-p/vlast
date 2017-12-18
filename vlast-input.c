@@ -1405,7 +1405,7 @@ main (int argc, char **argv)
             okay = make_request ();
         }
 
-        if (okay && !profile.quiet)
+        if (okay)
         {
             okay = vlast_load_xml_doc ();
         }

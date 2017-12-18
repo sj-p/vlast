@@ -1352,7 +1352,7 @@ proc_tree (xmlNode *top_node)
     {
         g_free (text);
 
-        return proc_method (top_node->children);
+        return (profile.quiet ? TRUE : proc_method (top_node->children));
     }
     g_free (text);
 
