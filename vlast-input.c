@@ -976,11 +976,12 @@ exit_opts:
 }
 
 
-static gboolean
+/* return zero on success, else error code */
+static gint
 load_xml_from_file ()
 {
     gchar *filename;
-    gboolean retval;
+    gint ret_val = VLAST_ERR_OK;
     GError *error = NULL;
 
     if (profile.last_page > 0)
@@ -988,22 +989,25 @@ load_xml_from_file ()
         filename = g_strdup_printf (profile.xml_file, profile.num_page);
 
         DBG("FILE: loading file %s", filename);
-        retval = g_file_get_contents (filename,
-                                      &xml_buf.buffer,
-                                      &xml_buf.windex,
-                                      &error);
+        if (!g_file_get_contents (filename, &xml_buf.buffer,
+                                  &xml_buf.windex, &error))
+        {
+            ret_val = VLAST_ERR_LOAD_XML;
+        }
+
         g_free (filename);
     }
     else
     {
         DBG("FILE: loading file %s", profile.xml_file);
-        retval = g_file_get_contents (profile.xml_file,
-                                      &xml_buf.buffer,
-                                      &xml_buf.windex,
-                                      &error);
+        if (!g_file_get_contents (profile.xml_file, &xml_buf.buffer,
+                                  &xml_buf.windex, &error))
+        {
+            ret_val = VLAST_ERR_LOAD_XML;
+        }
     }
 
-    if (retval)
+    if (ret_val == VLAST_ERR_OK)
     {
         DBG("FILE: loaded xml file, length %u bytes", xml_buf.windex);
     }
@@ -1014,7 +1018,7 @@ load_xml_from_file ()
         g_error_free (error);
     }
 
-    return retval;
+    return ret_val;
 }
 
 
@@ -1148,13 +1152,17 @@ get_session_key ()
 }
 
 
-static gchar *
-build_url ()
+/* return zero on success & url string in *url
+ * else error code */
+static gint
+build_url (gchar **url)
 {
     gint i;
-    gchar *url, *sk = NULL;
+    gchar *sk = NULL;
     gchar *limit = NULL, *page = NULL, *time1 = NULL, *time2 = NULL;
     GPtrArray *paras, *values;
+
+    if (url == NULL) return VLAST_ERR_URL;
 
     if (profile.sign_rq && profile.user != NULL)
     {
@@ -1163,7 +1171,7 @@ build_url ()
         {
             ERR("session key not found for user '%s' - reauthenticate?", profile.user);
 
-            return NULL;
+            return VLAST_ERR_SK;
         }
     }
 
@@ -1234,7 +1242,7 @@ build_url ()
     }
 
     /* build request url */
-    url = g_strdup ("http://ws.audioscrobbler.com/2.0/");
+    *url = g_strdup ("http://ws.audioscrobbler.com/2.0/");
     for (i = 0; i < paras->len; i++)
     {
         gchar *temp;
@@ -1243,13 +1251,13 @@ build_url ()
         escaped = g_uri_escape_string ((gchar*) g_ptr_array_index (values, i),
                                        NULL, FALSE);
 
-        temp = g_strdup_printf ("%s%c%s=%s", url,
+        temp = g_strdup_printf ("%s%c%s=%s", *url,
                                              (i == 0 ? '?' : '&'),
                                              (gchar*) g_ptr_array_index (paras, i),
                                              escaped);
-        g_free (url);
+        g_free (*url);
         g_free (escaped);
-        url = temp;
+        *url = temp;
     }
 
     /* free stuff we no longer need */
@@ -1261,30 +1269,38 @@ build_url ()
     g_ptr_array_free (paras, TRUE);
     g_ptr_array_free (values, TRUE);
 
-    return url;
+    return VLAST_ERR_OK;
 }
 
 
-static gboolean
+/* return zero on success, else error code */
+static gint
 make_request ()
 {
     gchar *request, *filename, *post_data;
-    gboolean retval = TRUE;
+    gint ret_val;
     GError *error = NULL;
     CURL *curl;
     CURLcode res = CURLE_OK;
 
-    request = build_url ();
+    ret_val = build_url (&request);
+    if (ret_val != VLAST_ERR_OK) return ret_val;
+
     DBG("RQ: url = %s", request);
 
-    if (request == NULL) return FALSE;
+    if (request == NULL) return VLAST_ERR_URL;
 
     /* separate POST data for signed requests */
     if (profile.sign_rq)
     {
         post_data = strchr (request, '?');
 
-        if (post_data == NULL) return FALSE;
+        if (post_data == NULL)
+        {
+            g_free (request);
+
+            return VLAST_ERR_URL;
+        }
 
         *post_data = '\0';
 
@@ -1300,7 +1316,7 @@ make_request ()
     curl = curl_easy_init ();
     if (curl == NULL)
     {
-        retval = FALSE;
+        ret_val = VLAST_ERR_LIBCURL;
         ERR("RQ: failed to init curl");
 
         goto exit_rq;
@@ -1337,6 +1353,8 @@ make_request ()
         {
             ERR("RQ: failed to save response:\n     %s", error->message);
 
+            ret_val = VLAST_ERR_SAVE_XML;
+
             g_error_free (error);
         }
     }
@@ -1348,16 +1366,15 @@ make_request ()
     }
     else
     {
-        retval = FALSE;
-        ERR("RQ: curl failed with code %d", res);
+        ret_val = (ret_val == VLAST_ERR_OK ? VLAST_ERR_HTTP : VLAST_ERR_HTTP_SAVE);
 
-        goto exit_rq;
+        ERR("RQ: curl failed with code %d", res);
     }
 
 exit_rq:
     g_free (request);
 
-    return retval;
+    return ret_val;
 }
 
 
@@ -1385,29 +1402,31 @@ free_profile ()
 int
 main (int argc, char **argv)
 {
-    gboolean okay;
+    gint ret_val = VLAST_ERR_OK;
 
-    okay = load_options (&argc, &argv);
+    if (!load_options (&argc, &argv))
+        ret_val = VLAST_ERR_OPTIONS;
 
-    if (okay) load_config ();
+    if (ret_val == VLAST_ERR_OK) load_config ();
 
-    DBG("MAIN: okay:%d pages:%d->%d", okay, profile.num_page, profile.last_page);
+    DBG("MAIN: ret_val:%d pages:%d->%d", ret_val, profile.num_page, profile.last_page);
 
-    while (okay && (profile.last_page < 1 || profile.num_page <= profile.last_page))
+    while (ret_val == VLAST_ERR_OK &&
+                (profile.last_page < 1 || profile.num_page <= profile.last_page))
     {
         DBG("MAIN: page:%d", profile.num_page);
         if (profile.from_file)
         {
-            okay = load_xml_from_file ();
+            ret_val = load_xml_from_file ();
         }
         else
         {
-            okay = make_request ();
+            ret_val = make_request ();
         }
 
-        if (okay)
+        if (ret_val == VLAST_ERR_OK)
         {
-            okay = vlast_load_xml_doc ();
+            ret_val = vlast_load_xml_doc ();
         }
 
         /* if page range not set we're done */
@@ -1424,5 +1443,5 @@ main (int argc, char **argv)
 
     free_profile ();
 
-    return !okay;
+    return ret_val;
 }

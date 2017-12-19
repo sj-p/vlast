@@ -150,6 +150,23 @@ This expects file "test-5.xml" to be present:
     $ vlast -i "test-%d.xml" -n 5-5
 
 
+Exit Codes
+-------------
+    0 success
+ 1-29 last.fm error codes (see https://www.last.fm/api/errorcodes)
+  127 last.fm error, no code available
+  128 failed to parse options
+  129 failed to load xml from file
+  130 failed to parse xml
+  131 failed to extract data from xml
+  132 fail in making request url
+  133 failed to init libcurl
+  134 failed to save xml response
+  135 http request failed, for libcurl response code see stderr
+  136 134+135
+  137 failed to find session key (key deleted? user not authenticated?)
+
+
 More Examples
 -------------
 

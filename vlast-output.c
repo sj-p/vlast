@@ -1328,15 +1328,20 @@ dump_xml ()
 }
 
 
-static gboolean
+/* return zero on success, else lfm status code
+ * or VLAST_ERR_LASTFM if no code */
+static gint
 proc_tree (xmlNode *top_node)
 {
     xmlNode *node;
     gchar *text;
+    gint ret_val = VLAST_ERR_OK;
 
     if (strcmp ((char*) top_node->name, "lfm") != 0)
     {
         DBG("P_TREE: didn't get lfm tag");
+
+        ret_val = VLAST_ERR_LASTFM;
 
         goto exit_dump;
     }
@@ -1346,13 +1351,18 @@ proc_tree (xmlNode *top_node)
     {
         DBG("P_TREE: didn't get lfm status");
 
+        ret_val = VLAST_ERR_LASTFM;
+
         goto exit_dump;
     }
     if (strcmp (text, "ok") == 0)
     {
         g_free (text);
 
-        return (profile.quiet ? TRUE : proc_method (top_node->children));
+        if (!profile.quiet && !proc_method (top_node->children))
+            ret_val = VLAST_ERR_XML_DATA;
+
+        return ret_val;
     }
     g_free (text);
 
@@ -1362,15 +1372,25 @@ proc_tree (xmlNode *top_node)
     {
         DBG("P_TREE: didn't get error tag");
 
+        ret_val = VLAST_ERR_LASTFM;
+
         goto exit_dump;
     }
 
     fprintf (stderr, "\nLastFM reports fail: ");
 
     text = get_node_prop (node, "code");
-    if (text != NULL)
+    if (text == NULL)
+    {
+        ret_val = VLAST_ERR_LASTFM;
+    }
+    else
     {
         fprintf (stderr, "code %s ", text);
+
+        ret_val = atoi (text);
+
+        if (ret_val < 1 || ret_val > 127) ret_val = VLAST_ERR_LASTFM;
 
         g_free (text);
     }
@@ -1385,18 +1405,20 @@ proc_tree (xmlNode *top_node)
 
     fprintf (stderr, "\n\n");
 
-    return FALSE;
+    return ret_val;
 
 exit_dump:
     dump_xml ();
 
-    return FALSE;
+    return ret_val;
 }
 
-gboolean
+
+/* return zero on success, else error code */
+gint
 vlast_load_xml_doc ()
 {
-    gboolean okay = TRUE;
+    gint ret_val = VLAST_ERR_OK;
     xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
 
@@ -1414,7 +1436,7 @@ vlast_load_xml_doc ()
 
         dump_xml ();
 
-        okay = FALSE;
+        ret_val = VLAST_ERR_PARSE_XML;
 
         goto exit_xml;
     }
@@ -1428,11 +1450,11 @@ vlast_load_xml_doc ()
 
         dump_xml ();
 
-        okay = FALSE;
+        ret_val = VLAST_ERR_PARSE_XML;
     }
     else
     {
-        okay = proc_tree (root_element);
+        ret_val = proc_tree (root_element);
     }
 
 exit_xml:
@@ -1440,6 +1462,6 @@ exit_xml:
 
     xmlCleanupParser ();
 
-    return okay;
+    return ret_val;
 }
 

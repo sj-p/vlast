@@ -56,6 +56,23 @@ typedef struct _VlastBuffer
 
 enum
 {
+    VLAST_ERR_OK        = 0,
+    VLAST_ERR_LASTFM    = 127,
+    VLAST_ERR_OPTIONS   = 128,
+    VLAST_ERR_LOAD_XML  = 129,
+    VLAST_ERR_PARSE_XML = 130,
+    VLAST_ERR_XML_DATA  = 131,
+    VLAST_ERR_URL       = 132,
+    VLAST_ERR_LIBCURL   = 133,
+    VLAST_ERR_SAVE_XML  = 134,
+    VLAST_ERR_HTTP      = 135,
+    VLAST_ERR_HTTP_SAVE = 136,
+    VLAST_ERR_SK        = 137
+};
+
+
+enum
+{
     METH_STR_API = 0,
     METH_STR_SHORT,
     METH_STR_MAND,
@@ -79,7 +96,7 @@ enum
 #define DBG(...) if(profile.debug){fprintf(stderr,"vlast: ");fprintf(stderr, __VA_ARGS__);fprintf(stderr,"\n");}
 
 
-gboolean vlast_load_xml_doc ();
+gint vlast_load_xml_doc ();
 gboolean vlast_sk_save ();
 gint vlast_index_image_size (const gchar *img_size);
 
