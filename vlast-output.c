@@ -694,10 +694,6 @@ proc_tracks (xmlNode *first_node, VlastResults *results)
     {
         add_output_string (results, "", "List of tracks was empty");
     }
-    else
-    {
-        add_blank_line (results);
-    }
 
     return TRUE;
 }
@@ -769,10 +765,6 @@ proc_albums (xmlNode *first_node, VlastResults *results)
     {
         add_output_string (results, "", "List of albums was empty");
     }
-    else
-    {
-        add_blank_line (results);
-    }
 
     return TRUE;
 }
@@ -827,10 +819,6 @@ proc_users (xmlNode *first_node, VlastResults *results)
     {
         add_output_string (results, "", "List of users was empty");
     }
-    else
-    {
-        add_blank_line (results);
-    }
 
     return TRUE;
 }
@@ -875,10 +863,6 @@ proc_tags (xmlNode *first_node, VlastResults *results)
     if (i == 0)
     {
         add_output_string (results, "", "List of tags was empty");
-    }
-    else
-    {
-        add_blank_line (results);
     }
 
     return TRUE;
@@ -1180,8 +1164,6 @@ proc_scrobbles (xmlNode *first_node, VlastResults *results)
         }
     }
 
-    add_blank_line (results);
-
     return TRUE;
 }
 
@@ -1195,9 +1177,6 @@ proc_method (xmlNode *first_node)
     VlastResults *results;
 
     results = g_new0 (VlastResults, 1);
-
-    add_output_string (results, "response", "OK");
-    add_blank_line (results);
 
     for (node = first_node; node != NULL; node = node->next)
     {
@@ -1291,16 +1270,14 @@ proc_method (xmlNode *first_node)
             okay = FALSE;
         }
 
-        if (results->output != NULL)
-        {
-            fputs (results->output, stdout);
-
-            g_free (results->output);
-
-            results->output = NULL;
-        }
-
         break;
+    }
+
+    if (results->output == NULL && okay)
+    {
+        add_blank_line (results);
+
+        add_output_string (results, "response", "OK");
     }
 
     if (results->output != NULL)

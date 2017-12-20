@@ -1441,6 +1441,8 @@ main (int argc, char **argv)
         }
     }
 
+    printf ("\n");
+
     free_profile ();
 
     return ret_val;
