@@ -533,6 +533,9 @@ proc_artist_info (xmlNode *first_node, VlastResults *results, gint count)
 
     add_output_str_from_tag (results, first_node, "name", "name");
 
+    if (profile.show_mbids)
+        add_output_str_from_tag (results, first_node, "mbid", "artist mbid");
+
     add_output_bool_from_tag (results, first_node,
                               "ontour", "on tour", "1", FALSE);
 
@@ -611,11 +614,19 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
         add_output_str_from_tag (results, first_node, "track", "track");
     }
 
+    if (profile.show_mbids)
+        add_output_str_from_tag (results, first_node, "mbid", "track mbid");
+
     if (!add_output_str_from_tag (results, first_node, "artist", "artist"))
     {
         node = get_child_node_by_tag (first_node, "artist");
         if (node != NULL)
+        {
             add_output_str_from_tag (results, node->children, "name", "artist");
+
+            if (profile.show_mbids)
+                add_output_str_from_tag (results, node->children, "mbid", "artist mbid");
+        }
     }
 
     add_output_str_from_tag (results, first_node, "albumArtist", "album-artist");
@@ -626,6 +637,9 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
         if (node != NULL)
         {
             add_output_str_from_tag (results, node->children, "title", "album");
+
+            if (profile.show_mbids)
+                add_output_str_from_tag (results, node->children, "mbid", "album mbid");
 
             add_output_image_url (results, node->children);
         }
@@ -708,13 +722,22 @@ proc_album_info (xmlNode *first_node, VlastResults *results, gint count)
 
     if (!add_output_str_from_tag (results, first_node, "artist", "artist"))
     {
-        xmlNode *a_node;
+        xmlNode *node;
 
-        a_node = get_child_node_by_tag (first_node, "artist");
-        add_output_str_from_tag (results, a_node->children, "name", "artist");
+        node = get_child_node_by_tag (first_node, "artist");
+        if (node != NULL)
+        {
+            add_output_str_from_tag (results, node->children, "name", "artist");
+
+            if (profile.show_mbids)
+                add_output_str_from_tag (results, node->children, "mbid", "artist mbid");
+        }
     }
 
     add_output_str_from_tag (results, first_node, "name", "album");
+
+    if (profile.show_mbids)
+        add_output_str_from_tag (results, first_node, "mbid", "album mbid");
 
     add_output_image_url (results, first_node);
 

@@ -11,7 +11,7 @@
 #include "vlast.h"
 
 
-VlastData profile = {FALSE, FALSE, FALSE, FALSE, FALSE,
+VlastData profile = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 VlastBuffer xml_buf = {NULL, 0, 0};
@@ -407,6 +407,11 @@ load_config ()
             g_free (img_size);
         }
 
+        /* if mbids weren't enabled on command line, read from config */
+        if (!profile.show_mbids)
+        {
+            profile.show_mbids = g_key_file_get_boolean (kf, "Settings", "ShowMBIDs", NULL);
+        }
     }
     else
     {
@@ -690,6 +695,8 @@ load_options (int *argc, char ***argv)
             "print image URLs for size I (default: no urls)", "I" },
         { "wiki-full", 'w', 0, G_OPTION_ARG_NONE, &profile.wiki_full,
             "print full wiki text (default: summary only)", NULL },
+        { "show-mbids", 0, 0, G_OPTION_ARG_NONE, &profile.show_mbids,
+            "print MusicBrainz ID strings (default: no mbids)", NULL },
         { "quiet", 'q', 0, G_OPTION_ARG_NONE, &profile.quiet,
             "don't print output after saving xml file", NULL },
         { "list-methods",  0, 0, G_OPTION_ARG_NONE, &mlist,

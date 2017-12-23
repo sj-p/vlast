@@ -11,6 +11,7 @@ typedef struct _VlastData
     gboolean    wiki_full;
     gboolean    quiet;
     gboolean    sign_rq;
+    gboolean    show_mbids;
     gint        method;
     gint        period;
     gint        tagtype;
