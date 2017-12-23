@@ -523,6 +523,78 @@ add_output_wiki (VlastResults *results, xmlNode *first, const gchar *tagname)
 
 
 static gboolean
+proc_artist_short (xmlNode *first_node, VlastResults *results)
+{
+    xmlNode *node;
+    gchar *text;
+
+    if (first_node == NULL || results == NULL) return FALSE;
+
+    node = get_child_node_by_tag (first_node, "artist");
+    if (node == NULL) return FALSE;
+
+    text = get_node_contents (node);
+    if (text != NULL)
+    {
+        add_output_string (results, "artist", text);
+
+        g_free (text);
+
+        return TRUE;
+    }
+
+    add_output_str_from_tag (results, node->children, "name", "artist");
+
+    results->indent++;
+
+    if (profile.show_mbids)
+        add_output_str_from_tag (results, node->children, "mbid", "mbid");
+
+    add_output_image_url (results, node->children);
+
+    results->indent--;
+
+    return TRUE;
+}
+
+
+static gboolean
+proc_album_short (xmlNode *first_node, VlastResults *results)
+{
+    xmlNode *node;
+    gchar *text;
+
+    if (first_node == NULL || results == NULL) return FALSE;
+
+    node = get_child_node_by_tag (first_node, "album");
+    if (node == NULL) return FALSE;
+
+    text = get_node_contents (node);
+    if (text != NULL)
+    {
+        add_output_string (results, "album", text);
+
+        g_free (text);
+
+        return TRUE;
+    }
+
+    add_output_str_from_tag (results, node->children, "name", "album");
+
+    results->indent++;
+
+    if (profile.show_mbids)
+        add_output_str_from_tag (results, node->children, "mbid", "mbid");
+
+    add_output_image_url (results, node->children);
+
+    results->indent--;
+
+    return TRUE;
+}
+
+
+static gboolean
 proc_artist_info (xmlNode *first_node, VlastResults *results, gint count)
 {
     gchar **strs, **str;
@@ -534,7 +606,7 @@ proc_artist_info (xmlNode *first_node, VlastResults *results, gint count)
     add_output_str_from_tag (results, first_node, "name", "name");
 
     if (profile.show_mbids)
-        add_output_str_from_tag (results, first_node, "mbid", "artist mbid");
+        add_output_str_from_tag (results, first_node, "mbid", "mbid");
 
     add_output_bool_from_tag (results, first_node,
                               "ontour", "on tour", "1", FALSE);
@@ -605,7 +677,6 @@ static gboolean
 proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
 {
     gchar **tags, **tag;
-    xmlNode *node;
 
     add_leader (results, "track", count);
 
@@ -615,35 +686,13 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
     }
 
     if (profile.show_mbids)
-        add_output_str_from_tag (results, first_node, "mbid", "track mbid");
+        add_output_str_from_tag (results, first_node, "mbid", "mbid");
 
-    if (!add_output_str_from_tag (results, first_node, "artist", "artist"))
-    {
-        node = get_child_node_by_tag (first_node, "artist");
-        if (node != NULL)
-        {
-            add_output_str_from_tag (results, node->children, "name", "artist");
-
-            if (profile.show_mbids)
-                add_output_str_from_tag (results, node->children, "mbid", "artist mbid");
-        }
-    }
+    proc_artist_short (first_node, results);
 
     add_output_str_from_tag (results, first_node, "albumArtist", "album-artist");
 
-    if (!add_output_str_from_tag (results, first_node, "album", "album"))
-    {
-        node = get_child_node_by_tag (first_node, "album");
-        if (node != NULL)
-        {
-            add_output_str_from_tag (results, node->children, "title", "album");
-
-            if (profile.show_mbids)
-                add_output_str_from_tag (results, node->children, "mbid", "album mbid");
-
-            add_output_image_url (results, node->children);
-        }
-    }
+    proc_album_short (first_node, results);
 
     add_output_image_url (results, first_node);
 
@@ -720,24 +769,12 @@ proc_album_info (xmlNode *first_node, VlastResults *results, gint count)
 
     add_leader (results, "album", count);
 
-    if (!add_output_str_from_tag (results, first_node, "artist", "artist"))
-    {
-        xmlNode *node;
-
-        node = get_child_node_by_tag (first_node, "artist");
-        if (node != NULL)
-        {
-            add_output_str_from_tag (results, node->children, "name", "artist");
-
-            if (profile.show_mbids)
-                add_output_str_from_tag (results, node->children, "mbid", "artist mbid");
-        }
-    }
+    proc_artist_short (first_node, results);
 
     add_output_str_from_tag (results, first_node, "name", "album");
 
     if (profile.show_mbids)
-        add_output_str_from_tag (results, first_node, "mbid", "album mbid");
+        add_output_str_from_tag (results, first_node, "mbid", "mbid");
 
     add_output_image_url (results, first_node);
 
