@@ -36,6 +36,7 @@ typedef struct _VlastData
     gchar      *album_artist;
     gchar      *tag;
     gchar      *country;
+    gchar      *mbid;
 } VlastData;
 
 typedef struct _VlastResults

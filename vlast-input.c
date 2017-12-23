@@ -13,7 +13,8 @@
 
 VlastData profile = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                     NULL, NULL, NULL, NULL, NULL};
 VlastBuffer xml_buf = {NULL, 0, 0};
 
 const gchar *tagtypes[] = {"artist", "album", "track", NULL};
@@ -54,64 +55,64 @@ const gchar *autocorrects[] = {"0", "1", NULL};
  *          'time1' param name, 'time2' param name, tag/tags */
 const gchar *methods[][NUM_METH_STR] =
 {
-    {"auth.gettoken",            "au.gt","*",    "KUABRTPNLVY",NULL,NULL,NULL},
-    {"auth.getsession",          "au.gs","*K",   "UABRTPNLVY", NULL,NULL,NULL},
-    {"user.getinfo",             "u.gi", "U",    "KABRTPNLV",  NULL,NULL,NULL},
-    {"user.getrecenttracks",     "u.grt","U",    "KABRTPLV",   "from","to",NULL},
-    {"user.gettopartists",       "u.gta","U",    "KABRTLV",    NULL,NULL,NULL},
-    {"user.gettopalbums",        "u.gtb","U",    "KABRTLV",    NULL,NULL,NULL},
-    {"user.gettoptracks",        "u.gtt","U",    "KABRTLV",    NULL,NULL,NULL},
-    {"user.gettoptags",          "u.gtg","U",    "KABRTPLV",   NULL,NULL,NULL},
-    {"user.getlovedtracks",      "u.glt","U",    "KABRTPLV",   NULL,NULL,NULL},
-    {"user.getfriends",          "u.gf", "U",    "KABRTPLV",   NULL,NULL,NULL},
-    {"user.getweeklyartistchart","u.gac","U",    "KABRTPLV",   "from","to",NULL},
-    {"user.getweeklyalbumchart", "u.gbc","U",    "KABRTPLV",   "from","to",NULL},
-    {"user.getweeklytrackchart", "u.gtc","U",    "KABRTPLV",   "from","to",NULL},
-    {"user.getweeklychartlist",  "u.gcl","U",    "KABRTPLV",   NULL,NULL,NULL},
-    {"user.getartisttracks",     "u.gat","UA",   "KBRTL",      "starttimestamp","endtimestamp",NULL},
-    {"user.getpersonaltags",     "u.gpg","UGY",  "KABRTPLV",   NULL,NULL,"tag"},
-    {"library.getartists",       "l.ga", "U",    "KABRTPL",    NULL,NULL,NULL},
-    {"artist.getinfo",           "a.gi", "A",    "KBRTPN",     NULL,NULL,NULL},
-    {"artist.getcorrection",     "a.gc", "A",    "KUBRTPNLV",  NULL,NULL,NULL},
-    {"artist.gettags",           "a.gg", "AU",   "KBRTPL",     NULL,NULL,NULL},
-    {"artist.addtags",           "a.g+", "*UAG", "KBRTPL",     NULL,NULL,"tags"},
-    {"artist.removetag",         "a.g-", "*UAG", "KBRTPL",     NULL,NULL,"tag"},
-    {"artist.getsimilar",        "a.gs", "A",    "KUBRTPL",    NULL,NULL,NULL},
-    {"artist.gettopalbums",      "a.gtb","A",    "KUBRTPL",    NULL,NULL,NULL},
-    {"artist.gettoptracks",      "a.gtt","A",    "KUBRTPL",    NULL,NULL,NULL},
-    {"artist.gettoptags",        "a.gtg","A",    "KUBRTPL",    NULL,NULL,NULL},
-    {"artist.search",            "a.s",  "A",    "KUBRTPLV",   NULL,NULL,NULL},
-    {"album.getinfo",            "b.gi", "BA",   "KRTPN",      NULL,NULL,NULL},
-    {"album.gettags",            "b.gg", "ABU",  "KRTPL",      NULL,NULL,NULL},
-    {"album.addtags",            "b.g+", "*UABG","KRTPL",      NULL,NULL,"tags"},
-    {"album.removetag",          "b.g-", "*UABG","KRTPL",      NULL,NULL,"tag"},
-    {"album.gettoptags",         "b.gtg","AB",   "KRUTPL",     NULL,NULL,NULL},
-    {"album.search",             "b.s",  "B",    "KRUTPLV",    NULL,NULL,NULL},
-    {"track.getinfo",            "t.gi", "TA",   "KBRPN",      NULL,NULL,NULL},
-    {"track.getcorrection",      "t.gc", "TA",   "KUBRPNLV",   NULL,NULL,NULL},
-    {"track.gettags",            "t.gg", "ATU",  "KBRPL",      NULL,NULL,NULL},
-    {"track.addtags",            "t.g+", "*UATG","KBRPL",      NULL,NULL,"tags"},
-    {"track.removetag",          "t.g-", "*UATG","KBRPL",      NULL,NULL,"tag"},
-    {"track.getsimilar",         "t.gs", "TA",   "KUBRPL",     NULL,NULL,NULL},
-    {"track.gettoptags",         "t.gtg","TA",   "KUBRPL",     NULL,NULL,NULL},
-    {"track.search",             "t.s",  "T",    "KUBRPLV",    NULL,NULL,NULL},
-    {"track.scrobble",           "t.scr","*UAT1","KPLVY",      "timestamp","duration",NULL},
-    {"track.updatenowplaying",   "t.unp","*UAT", "KPLVY",      NULL,"duration",NULL},
-    {"track.love",               "t.l",  "*UAT", "KBRPLVY",    NULL,NULL,NULL},
-    {"track.unlove",             "t.u",  "*UAT", "KBRPLVY",    NULL,NULL,NULL},
-    {"chart.gettopartists",      "c.ga", "",     "KUABRTPLV",  NULL,NULL,NULL},
-    {"chart.gettoptracks",       "c.gt", "",     "KUABRTPLV",  NULL,NULL,NULL},
-    {"chart.gettoptags",         "c.gg", "",     "KUABRTPLV",  NULL,NULL,NULL},
-    {"geo.gettopartists",        "geo.a","C",    "KUABRTPLV",  NULL,NULL,NULL},
-    {"geo.gettoptracks",         "geo.t","C",    "KUABRTPLV",  NULL,NULL,NULL},
-    {"tag.getinfo",              "g.gi", "G",    "KUABRTPNV",  NULL,NULL,"tag"},
-    {"tag.getsimilar",           "g.gs", "G",    "KUABRTPLV",  NULL,NULL,"tag"},
-    {"tag.gettopartists",        "g.gta","G",    "KUABRTPLV",  NULL,NULL,"tag"},
-    {"tag.gettopalbums",         "g.gtb","G",    "KUABRTPLV",  NULL,NULL,"tag"},
-    {"tag.gettoptracks",         "g.gtt","G",    "KUABRTPLV",  NULL,NULL,"tag"},
-    {"tag.gettoptags",           "g.gtg","",     "KUABRTPLV",  NULL,NULL,NULL},
-    {"tag.getweeklychartlist",   "g.gcl","G",    "KUABRTPLV",  NULL,NULL,"tag"},
-    {NULL,                       NULL,   NULL,   NULL,         NULL,NULL,NULL}
+    {"auth.gettoken",            "au.gt","*",    "KUABRTPNLVYM",NULL,NULL,NULL},
+    {"auth.getsession",          "au.gs","*K",   "UABRTPNLVYM", NULL,NULL,NULL},
+    {"user.getinfo",             "u.gi", "U",    "KABRTPNLVM",  NULL,NULL,NULL},
+    {"user.getrecenttracks",     "u.grt","U",    "KABRTPLVM",   "from","to",NULL},
+    {"user.gettopartists",       "u.gta","U",    "KABRTLVM",    NULL,NULL,NULL},
+    {"user.gettopalbums",        "u.gtb","U",    "KABRTLVM",    NULL,NULL,NULL},
+    {"user.gettoptracks",        "u.gtt","U",    "KABRTLVM",    NULL,NULL,NULL},
+    {"user.gettoptags",          "u.gtg","U",    "KABRTPLVM",   NULL,NULL,NULL},
+    {"user.getlovedtracks",      "u.glt","U",    "KABRTPLVM",   NULL,NULL,NULL},
+    {"user.getfriends",          "u.gf", "U",    "KABRTPLVM",   NULL,NULL,NULL},
+    {"user.getweeklyartistchart","u.gac","U",    "KABRTPLVM",   "from","to",NULL},
+    {"user.getweeklyalbumchart", "u.gbc","U",    "KABRTPLVM",   "from","to",NULL},
+    {"user.getweeklytrackchart", "u.gtc","U",    "KABRTPLVM",   "from","to",NULL},
+    {"user.getweeklychartlist",  "u.gcl","U",    "KABRTPLVM",   NULL,NULL,NULL},
+    {"user.getartisttracks",     "u.gat","UA",   "KBRTLM",      "starttimestamp","endtimestamp",NULL},
+    {"user.getpersonaltags",     "u.gpg","UGY",  "KABRTPLVM",   NULL,NULL,"tag"},
+    {"library.getartists",       "l.ga", "U",    "KABRTPLM",    NULL,NULL,NULL},
+    {"artist.getinfo",           "a.gi", "A",    "KBRTPN",      NULL,NULL,NULL},
+    {"artist.getcorrection",     "a.gc", "A",    "KUBRTPNLVM",  NULL,NULL,NULL},
+    {"artist.gettags",           "a.gg", "AU",   "KBRTPL",      NULL,NULL,NULL},
+    {"artist.addtags",           "a.g+", "*UAG", "KBRTPLM",     NULL,NULL,"tags"},
+    {"artist.removetag",         "a.g-", "*UAG", "KBRTPLM",     NULL,NULL,"tag"},
+    {"artist.getsimilar",        "a.gs", "A",    "KUBRTPL",     NULL,NULL,NULL},
+    {"artist.gettopalbums",      "a.gtb","A",    "KUBRTPL",     NULL,NULL,NULL},
+    {"artist.gettoptracks",      "a.gtt","A",    "KUBRTPL",     NULL,NULL,NULL},
+    {"artist.gettoptags",        "a.gtg","A",    "KUBRTPL",     NULL,NULL,NULL},
+    {"artist.search",            "a.s",  "A",    "KUBRTPLVM",   NULL,NULL,NULL},
+    {"album.getinfo",            "b.gi", "BA",   "KRTPN",       NULL,NULL,NULL},
+    {"album.gettags",            "b.gg", "ABU",  "KRTPL",       NULL,NULL,NULL},
+    {"album.addtags",            "b.g+", "*UABG","KRTPLM",      NULL,NULL,"tags"},
+    {"album.removetag",          "b.g-", "*UABG","KRTPLM",      NULL,NULL,"tag"},
+    {"album.gettoptags",         "b.gtg","AB",   "KRUTPL",      NULL,NULL,NULL},
+    {"album.search",             "b.s",  "B",    "KRUTPLVM",    NULL,NULL,NULL},
+    {"track.getinfo",            "t.gi", "TA",   "KBRPN",       NULL,NULL,NULL},
+    {"track.getcorrection",      "t.gc", "TA",   "KUBRPNLVM",   NULL,NULL,NULL},
+    {"track.gettags",            "t.gg", "ATU",  "KBRPL",       NULL,NULL,NULL},
+    {"track.addtags",            "t.g+", "*UATG","KBRPLM",      NULL,NULL,"tags"},
+    {"track.removetag",          "t.g-", "*UATG","KBRPLM",      NULL,NULL,"tag"},
+    {"track.getsimilar",         "t.gs", "TA",   "KUBRPL",      NULL,NULL,NULL},
+    {"track.gettoptags",         "t.gtg","TA",   "KUBRPL",      NULL,NULL,NULL},
+    {"track.search",             "t.s",  "T",    "KUBRPLVM",    NULL,NULL,NULL},
+    {"track.scrobble",           "t.scr","*UAT1","KPLVYM",      "timestamp","duration",NULL},
+    {"track.updatenowplaying",   "t.unp","*UAT", "KPLVYM",      NULL,"duration",NULL},
+    {"track.love",               "t.l",  "*UAT", "KBRPLVYM",    NULL,NULL,NULL},
+    {"track.unlove",             "t.u",  "*UAT", "KBRPLVYM",    NULL,NULL,NULL},
+    {"chart.gettopartists",      "c.ga", "",     "KUABRTPLVM",  NULL,NULL,NULL},
+    {"chart.gettoptracks",       "c.gt", "",     "KUABRTPLVM",  NULL,NULL,NULL},
+    {"chart.gettoptags",         "c.gg", "",     "KUABRTPLVM",  NULL,NULL,NULL},
+    {"geo.gettopartists",        "geo.a","C",    "KUABRTPLVM",  NULL,NULL,NULL},
+    {"geo.gettoptracks",         "geo.t","C",    "KUABRTPLVM",  NULL,NULL,NULL},
+    {"tag.getinfo",              "g.gi", "G",    "KUABRTPNVM",  NULL,NULL,"tag"},
+    {"tag.getsimilar",           "g.gs", "G",    "KUABRTPLVM",  NULL,NULL,"tag"},
+    {"tag.gettopartists",        "g.gta","G",    "KUABRTPLVM",  NULL,NULL,"tag"},
+    {"tag.gettopalbums",         "g.gtb","G",    "KUABRTPLVM",  NULL,NULL,"tag"},
+    {"tag.gettoptracks",         "g.gtt","G",    "KUABRTPLVM",  NULL,NULL,"tag"},
+    {"tag.gettoptags",           "g.gtg","",     "KUABRTPLVM",  NULL,NULL,NULL},
+    {"tag.getweeklychartlist",   "g.gcl","G",    "KUABRTPLVM",  NULL,NULL,"tag"},
+    {NULL,                       NULL,   NULL,   NULL,          NULL,NULL,NULL}
 };
 
 
@@ -453,6 +454,11 @@ remove_extra_options ()
     {
         switch (*p)
         {
+            case 'M':
+                g_free (profile.mbid);
+                profile.mbid = NULL;
+                break;
+
             case 'K':
                 g_free (profile.token);
                 profile.token = NULL;
@@ -515,6 +521,20 @@ remove_extra_options ()
         }
     }
 
+    /* if mbid used, ignore artist/album/track */
+    if (profile.mbid != NULL)
+    {
+        DBG("OPTS: using mbid, removing artist/album/track");
+
+        g_free (profile.artist);
+        profile.artist = NULL;
+
+        g_free (profile.album);
+        profile.album = NULL;
+
+        g_free (profile.track);
+        profile.track = NULL;
+    }
 }
 
 
@@ -555,7 +575,7 @@ check_mandatory_options ()
                 break;
 
             case 'A':
-                if (profile.artist == NULL)
+                if (profile.artist == NULL && profile.mbid == NULL)
                 {
                     ERR("OPTS: need 'artist' for this method");
                     retval = FALSE;
@@ -563,7 +583,7 @@ check_mandatory_options ()
                 break;
 
             case 'B':
-                if (profile.album == NULL)
+                if (profile.album == NULL && profile.mbid == NULL)
                 {
                     ERR("OPTS: need 'album' for this method");
                     retval = FALSE;
@@ -571,7 +591,7 @@ check_mandatory_options ()
                 break;
 
             case 'T':
-                if (profile.track == NULL)
+                if (profile.track == NULL && profile.mbid == NULL)
                 {
                     ERR("OPTS: need 'track' for this method");
                     retval = FALSE;
@@ -657,6 +677,8 @@ load_options (int *argc, char ***argv)
             "for track T", "T" },
         { "tag",      'g',    0, G_OPTION_ARG_STRING, &profile.tag,
             "for tag G (taglist for methods *.addtags)", "G" },
+        { "mbid",     'M',    0, G_OPTION_ARG_STRING, &profile.mbid,
+            "for MusicBrainz ID M", "M" },
         { "tagtype",  'y',    0, G_OPTION_ARG_STRING, &tagtype,
             "for tagging type Y [artist|album|track]", "Y" },
         { "country",    'c',    0, G_OPTION_ARG_STRING, &profile.country,
@@ -958,9 +980,9 @@ load_options (int *argc, char ***argv)
             retval = FALSE;
         }
 
-        if (!check_mandatory_options ()) retval = FALSE;
-
         remove_extra_options ();
+
+        if (!check_mandatory_options ()) retval = FALSE;
     }
 
 
@@ -1199,6 +1221,7 @@ build_url (gchar **url)
         param_add_str (paras, values, "albumArtist", profile.album_artist);
     }
     param_add_str (paras, values, "track", profile.track);
+    param_add_str (paras, values, "mbid", profile.mbid);
     param_add_str (paras, values, methods[profile.method][METH_STR_TAG], profile.tag);
     param_add_str (paras, values, "country", profile.country);
 
@@ -1396,6 +1419,7 @@ free_profile ()
     g_free (profile.api_secret);
     g_free (profile.artist);
     g_free (profile.country);
+    g_free (profile.mbid);
     g_free (profile.time_format);
     g_free (profile.tag);
     g_free (profile.token);
