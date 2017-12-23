@@ -33,8 +33,8 @@ Configuration File
 ------------------
 
 This is a key-value file similar to .desktop files for per-user settings.
-Vlast looks in group [Settings] for keys ApiKey, ApiSecret, TimeFormat &
-ImageSize
+Vlast looks in group [Settings] for keys ApiKey, ApiSecret, TimeFormat,
+ImageSize & ShowMBIDs
 
     ApiKey and ApiSecret are where you declare your own API key & API secret.
         (if either is missing defaults to internal key)
@@ -44,6 +44,9 @@ ImageSize
 
     ImageSize is the name of the image size for which to print image urls.
         (overriden by --image-size/-I; defaults to no urls)
+
+    ShowMBIDs controls whether MBIDs are printed, set true or false
+        (overriden by --show-mbids; defaults to no mbids)
 
 The default location for a configuration file is XDG_CONFIG_HOME/vlast.conf
 (which will usually be ~/.config/vlast.conf). Or you can specify a location
@@ -88,6 +91,7 @@ Define your request:
     -r, --album-artist=R    for album-artist R
     -t, --track=T           for track T
     -g, --tag=G             for tag G (taglist for methods *.addtags)
+    -M, --mbid=M            for MusicBrainz ID M
     -y, --tagtype=Y         for tagging type Y artist|album|track
     -c, --country=C         for ISO 3166-1 country name C (geo charts)
     -L, --lang=LL           for ISO 639 alpha-2 language code LL
@@ -108,6 +112,7 @@ Output control:
     -I, --image-size=I      print image URLs for size I (default: no urls)
     -w, --wiki-full         print full wiki text (default: summary only)
     -q, --quiet             don't print output after saving xml file
+    --show-mbids            print MusicBrainz ID strings (default: no mbids)
 
 XML files:
     -o, --outfile=F         output returned xml to file F
@@ -125,6 +130,7 @@ Notes:
     line, some urls to images with requested size are printed, or, if not
     available, the next larger size, or if there is none, the next smaller
     size. N.B. API terms of use forbid you from accessing images at these URLs...
+* printing MBIDs can also be enabled in the config file
 
 
 Page Ranges
