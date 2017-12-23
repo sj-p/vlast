@@ -579,12 +579,15 @@ proc_album_short (xmlNode *first_node, VlastResults *results)
         return TRUE;
     }
 
-    add_output_str_from_tag (results, node->children, "name", "album");
+    if (!add_output_str_from_tag (results, node->children, "name", "album"))
+        add_output_str_from_tag (results, node->children, "title", "album");
 
     results->indent++;
 
     if (profile.show_mbids)
         add_output_str_from_tag (results, node->children, "mbid", "mbid");
+
+    add_output_str_from_tag (results, node->children, "artist", "artist");
 
     add_output_image_url (results, node->children);
 
