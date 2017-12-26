@@ -548,16 +548,19 @@ proc_artist_short (xmlNode *first_node, VlastResults *results)
         return TRUE;
     }
 
-    add_output_str_from_tag (results, node->children, "name", "artist");
+    if (add_output_str_from_tag (results, node->children, "name", "artist"))
+    {
+        indent_change (results, 1);
 
-    indent_change (results, 1);
+        if (profile.show_mbids)
+            add_output_str_from_tag (results, node->children, "mbid", "mbid");
 
-    if (profile.show_mbids)
-        add_output_str_from_tag (results, node->children, "mbid", "mbid");
+        add_output_image_url (results, node->children);
 
-    add_output_image_url (results, node->children);
+        indent_change (results, -1);
 
-    indent_change (results, -1);
+        return TRUE;
+    }
 
     return FALSE;
 }
@@ -584,19 +587,22 @@ proc_album_short (xmlNode *first_node, VlastResults *results)
         return TRUE;
     }
 
-    if (!add_output_str_from_tag (results, node->children, "name", "album"))
-        add_output_str_from_tag (results, node->children, "title", "album");
+    if (add_output_str_from_tag (results, node->children, "name", "album") ||
+        add_output_str_from_tag (results, node->children, "title", "album"))
+    {
+        indent_change (results, 1);
 
-    indent_change (results, 1);
+        if (profile.show_mbids)
+            add_output_str_from_tag (results, node->children, "mbid", "mbid");
 
-    if (profile.show_mbids)
-        add_output_str_from_tag (results, node->children, "mbid", "mbid");
+        add_output_str_from_tag (results, node->children, "artist", "artist");
 
-    add_output_str_from_tag (results, node->children, "artist", "artist");
+        add_output_image_url (results, node->children);
 
-    add_output_image_url (results, node->children);
+        indent_change (results, -1);
 
-    indent_change (results, -1);
+        return TRUE;
+    }
 
     return FALSE;
 }
@@ -693,16 +699,20 @@ proc_track_info (xmlNode *first_node, VlastResults *results, gint count)
         add_output_str_from_tag (results, first_node, "track", "track");
     }
 
+    indent_change (results, 1);
+
     if (profile.show_mbids)
         add_output_str_from_tag (results, first_node, "mbid", "mbid");
 
-    proc_artist_short (first_node, results);
+    add_output_image_url (results, first_node);
 
-    add_output_str_from_tag (results, first_node, "albumArtist", "album-artist");
+    indent_change (results, -1);
+
+    proc_artist_short (first_node, results);
 
     proc_album_short (first_node, results);
 
-    add_output_image_url (results, first_node);
+    add_output_str_from_tag (results, first_node, "albumArtist", "album-artist");
 
     if (!add_output_date_from_tag (results, first_node, "date", "time"))
     {
@@ -777,14 +787,18 @@ proc_album_info (xmlNode *first_node, VlastResults *results, gint count)
 
     add_leader (results, "album", count);
 
-    proc_artist_short (first_node, results);
-
     add_output_str_from_tag (results, first_node, "name", "album");
+
+    indent_change (results, 1);
 
     if (profile.show_mbids)
         add_output_str_from_tag (results, first_node, "mbid", "mbid");
 
     add_output_image_url (results, first_node);
+
+    indent_change (results, -1);
+
+    proc_artist_short (first_node, results);
 
     add_output_int_from_tag (results, first_node, "listeners",
                              "listeners", FALSE);
