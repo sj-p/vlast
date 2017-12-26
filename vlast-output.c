@@ -7,6 +7,10 @@
 #include "vlast.h"
 
 
+#define INDENT_MAX (10)
+#define INDENT_SIZE (4)
+
+
 extern VlastData profile;
 extern VlastBuffer xml_buf;
 extern const gchar *tagtypes[];
@@ -159,23 +163,37 @@ format_time (const time_t secs)
 }
 
 
-static gchar *
-build_indent (VlastResults *results)
+static void
+indent_create (VlastResults *results)
 {
-    gchar *indent_str = NULL;
-    gint i;
+    gint indent_len;
 
-    if (results == NULL) return NULL;
+    if (results == NULL) return;
 
-    for (i = 0; i < results->indent; i++)
+    indent_len = INDENT_MAX * INDENT_SIZE;
+
+    results->indent_mem = malloc (indent_len + 1);
+
+    memset (results->indent_mem, ' ', indent_len);
+
+    results->indent_str = results->indent_mem + indent_len;
+    *results->indent_str = '\0';
+}
+
+
+static void
+indent_change (VlastResults *results, gint delta)
+{
+    if (results == NULL) return;
+
+    if (delta > 0 && results->indent_mem < results->indent_str)
     {
-        gchar *tmp = g_strdup_printf ("%s      ",
-                                      (indent_str == NULL ? "" : indent_str));
-        g_free (indent_str);
-        indent_str = tmp;
+        results->indent_str -= INDENT_SIZE;
     }
-
-    return indent_str;
+    else if (delta < 0 && *results->indent_str)
+    {
+        results->indent_str += INDENT_SIZE;
+    }
 }
 
 
@@ -204,24 +222,21 @@ static void
 add_leader (VlastResults *results, const gchar *title, gint count)
 {
     gchar *leader;
-    gchar *indent_str = NULL;
 
     if (results == NULL) return;
-
-    indent_str = build_indent (results);
 
     if (count <= 0)
     {   /* show title without count */
         leader = g_strdup_printf ("%s\n%s%s\n",
                                   (results->output == NULL ? "" : results->output),
-                                  (indent_str == NULL ? "" : indent_str),
+                                  results->indent_str,
                                   title);
     }
     else if (results->page_num > 0 && results->per_page > 0 && results->total > 0)
     {   /* show title with page count/total */
         leader = g_strdup_printf ("%s\n%s%s (%d/%d)\n",
                                   (results->output == NULL ? "" : results->output),
-                                  (indent_str == NULL ? "" : indent_str),
+                                  results->indent_str,
                                   title,
                                   count + (results->page_num - 1) * results->per_page,
                                   results->total);
@@ -230,12 +245,11 @@ add_leader (VlastResults *results, const gchar *title, gint count)
     {   /* show title with count */
         leader = g_strdup_printf ("%s\n%s%s (%d)\n",
                                   (results->output == NULL ? "" : results->output),
-                                  (indent_str == NULL ? "" : indent_str),
+                                  results->indent_str,
                                   title, count);
     }
 
     g_free (results->output);
-    g_free (indent_str);
 
     results->output = leader;
 }
@@ -245,19 +259,15 @@ static void
 add_output_string (VlastResults *results, const gchar *label, const gchar *str)
 {
     gchar *temp;
-    gchar *indent_str = NULL;
 
     if (results == NULL || label == NULL || str == NULL) return;
 
-    indent_str = build_indent (results);
-
     temp = g_strdup_printf ("%s%s%12s%c %s\n",
                             (results->output == NULL ? "" : results->output),
-                            (indent_str == NULL ? "" : indent_str),
+                            results->indent_str,
                             label,
                             (*label=='\0'?' ':':'), str);
 
-    g_free (indent_str);
     g_free (results->output);
 
     results->output = temp;
@@ -268,19 +278,16 @@ static void
 add_output_int (VlastResults *results, const gchar *label, gint num)
 {
     gchar *temp;
-    gchar *indent_str = NULL;
 
     if (results == NULL) return;
 
-    indent_str = build_indent (results);
-
     temp = g_strdup_printf ("%s%s%12s: %d\n",
                                     (results->output == NULL ? "" : results->output),
-                                    (indent_str == NULL ? "" : indent_str),
+                                    results->indent_str,
                                     label, num);
 
-    g_free (indent_str);
     g_free (results->output);
+
     results->output = temp;
 }
 
@@ -289,11 +296,8 @@ static void
 add_output_time (VlastResults *results, const gchar *label, time_t secs, gboolean add_uts)
 {
     gchar *temp, *time_str, *uts_str;
-    gchar *indent_str = NULL;
 
     if (results == NULL) return;
-
-    indent_str = build_indent (results);
 
     time_str = format_time (secs);
 
@@ -301,13 +305,14 @@ add_output_time (VlastResults *results, const gchar *label, time_t secs, gboolea
 
     temp = g_strdup_printf ("%s%s%12s: %s%s\n",
                                     (results->output == NULL ? "" : results->output),
-                                    (indent_str == NULL ? "" : indent_str),
+                                    results->indent_str,
                                     label, time_str,
                                     (add_uts ? uts_str : ""));
 
     g_free (time_str);
     g_free (uts_str);
     g_free (results->output);
+
     results->output = temp;
 }
 
@@ -545,16 +550,16 @@ proc_artist_short (xmlNode *first_node, VlastResults *results)
 
     add_output_str_from_tag (results, node->children, "name", "artist");
 
-    results->indent++;
+    indent_change (results, 1);
 
     if (profile.show_mbids)
         add_output_str_from_tag (results, node->children, "mbid", "mbid");
 
     add_output_image_url (results, node->children);
 
-    results->indent--;
+    indent_change (results, -1);
 
-    return TRUE;
+    return FALSE;
 }
 
 
@@ -582,7 +587,7 @@ proc_album_short (xmlNode *first_node, VlastResults *results)
     if (!add_output_str_from_tag (results, node->children, "name", "album"))
         add_output_str_from_tag (results, node->children, "title", "album");
 
-    results->indent++;
+    indent_change (results, 1);
 
     if (profile.show_mbids)
         add_output_str_from_tag (results, node->children, "mbid", "mbid");
@@ -591,9 +596,9 @@ proc_album_short (xmlNode *first_node, VlastResults *results)
 
     add_output_image_url (results, node->children);
 
-    results->indent--;
+    indent_change (results, -1);
 
-    return TRUE;
+    return FALSE;
 }
 
 
@@ -796,9 +801,11 @@ proc_album_info (xmlNode *first_node, VlastResults *results, gint count)
         add_blank_line (results);
         add_output_string (results, "tracklist", "");
 
-        ++results->indent;
+        indent_change (results, 1);
+
         proc_tracks (tracks->children, results);
-        --results->indent;
+
+        indent_change (results, -1);
     }
 
     add_output_wiki (results, first_node, "wiki");
@@ -1000,7 +1007,8 @@ proc_correction_info (xmlNode *first_node, VlastResults *results, gint count)
 
     g_free (corr);
 
-    ++results->indent;
+    indent_change (results, 1);
+
     for (node = first_node; node != NULL; node = node->next)
     {
         if (node->type != XML_ELEMENT_NODE) continue;
@@ -1011,7 +1019,8 @@ proc_correction_info (xmlNode *first_node, VlastResults *results, gint count)
             proc_track_info (node->children, results, 0);
 
     }
-    --results->indent;
+
+    indent_change (results, -1);
 
     return TRUE;
 }
@@ -1050,7 +1059,8 @@ proc_taggings (xmlNode *first_node, VlastResults *results)
 
     add_leader (results, "taggings", 0);
 
-    ++results->indent;
+    indent_change (results, 1);
+
     for (node = first_node; node != NULL; node = node->next)
     {
         if (node->type != XML_ELEMENT_NODE) continue;
@@ -1062,7 +1072,8 @@ proc_taggings (xmlNode *first_node, VlastResults *results)
         else if (strcmp ((char*)node->name, "tracks") == 0)
             proc_tracks (node->children, results);
     }
-    --results->indent;
+
+    indent_change (results, -1);
 
     return TRUE;
 }
@@ -1108,7 +1119,8 @@ proc_search_results (xmlNode *first_node, VlastResults *results)
 
     get_search_coordinates (first_node, results);
 
-    ++results->indent;
+    indent_change (results, 1);
+
     for (node = first_node; node != NULL; node = node->next)
     {
         if (node->type != XML_ELEMENT_NODE) continue;
@@ -1120,7 +1132,8 @@ proc_search_results (xmlNode *first_node, VlastResults *results)
         else if (strcmp ((char*)node->name, "trackmatches") == 0)
             proc_tracks (node->children, results);
     }
-    --results->indent;
+
+    indent_change (results, -1);
 
     return TRUE;
 }
@@ -1240,6 +1253,7 @@ proc_method (xmlNode *first_node)
     VlastResults *results;
 
     results = g_new0 (VlastResults, 1);
+    indent_create (results);
 
     for (node = first_node; node != NULL; node = node->next)
     {
@@ -1350,6 +1364,7 @@ proc_method (xmlNode *first_node)
         g_free (results->output);
     }
 
+    g_free (results->indent_mem);
     g_free (results);
 
     return okay;

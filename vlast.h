@@ -44,8 +44,9 @@ typedef struct _VlastResults
     gint        page_num;
     gint        per_page;
     gint        total;
-    gint        indent;
     gchar      *output;
+    gchar      *indent_mem;
+    gchar      *indent_str;
 } VlastResults;
 
 typedef struct _VlastBuffer
