@@ -11,7 +11,7 @@
 #include "vlast.h"
 
 
-VlastData profile = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+VlastData profile = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                      NULL, NULL, NULL, NULL, NULL};
@@ -709,6 +709,10 @@ load_options (int *argc, char ***argv)
             "don't fetch data, process xml file F", "F" },
         { "debug",    'd',    0, G_OPTION_ARG_NONE, &profile.debug,
             "print debug info on stderr", NULL },
+        { "dryrun",     0,    0, G_OPTION_ARG_NONE, &profile.dryrun,
+            "quit before sending request", NULL },
+        { "dry-run",    0,    0, G_OPTION_ARG_NONE, &profile.dryrun,
+            "quit before sending request", NULL },
         { "config",     0,    0, G_OPTION_ARG_FILENAME, &profile.config_file,
             "use configuration file F", "F" },
         { "time-format", 'T', 0, G_OPTION_ARG_STRING, &profile.time_format,
@@ -1336,9 +1340,9 @@ make_request ()
 
         post_data++;
 
+        DBG("RQ:  url = %s", request);
         DBG("RQ: post = %s", post_data);
     }
-    //exit(0);
 
     /* reset position in buffer */
     xml_buf.windex = 0;
@@ -1356,6 +1360,11 @@ make_request ()
     if (profile.sign_rq) curl_easy_setopt (curl, CURLOPT_POSTFIELDS, post_data);
     curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, mem_write);
 
+    if (profile.dryrun)
+    {
+        DBG("RQ: ** dry-run **, quitting before request");
+        exit (0);
+    }
     res = curl_easy_perform (curl);
 
     /* save data in buffer if filename set

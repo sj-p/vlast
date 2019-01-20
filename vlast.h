@@ -7,6 +7,7 @@
 typedef struct _VlastData
 {
     gboolean    debug;
+    gboolean    dryrun;
     gboolean    from_file;
     gboolean    wiki_full;
     gboolean    quiet;
